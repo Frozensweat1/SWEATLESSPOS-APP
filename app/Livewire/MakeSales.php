@@ -40,7 +40,6 @@ class MakeSales extends Component
         $this->customers = Customer::all();
         // Fetch settings information
         $this->settings = Setting::first();
-        
     }
 
     public function addProductToCart()
@@ -119,6 +118,12 @@ class MakeSales extends Component
 
     public function processSale()
     {
+        if (empty($this->cart)) {
+            // Alert warning if the cart is empty
+            $this->alert('warning', 'Cart is empty. Please add items before processing the sale.');
+            return;
+        }
+
         DB::beginTransaction();
 
         try {
@@ -158,10 +163,12 @@ class MakeSales extends Component
             // Step 3: Generate the barcode for the sale ID
             $barcodeGenerator = new BarcodeGeneratorPNG();
             $this->saleBarcode = base64_encode($barcodeGenerator->getBarcode($sale->id, $barcodeGenerator::TYPE_CODE_128));
-// Fetch customer details if selected
-        if ($this->customer_id) {
-            $this->buying_customer = Customer::find($this->customer_id);
-        }
+
+            // Fetch customer details if selected
+            if ($this->customer_id) {
+                $this->buying_customer = Customer::find($this->customer_id);
+            }
+
             // Step 4: Log the notification for the sale
             $this->logNotification('Sale Processed', 'Sale has been processed successfully.', 'success');
 
@@ -174,8 +181,6 @@ class MakeSales extends Component
             $this->alert('error', 'An error occurred while processing the sale. Please try again.');
         }
     }
-
-
     protected function logNotification($title, $message, $type)
     {
         Notification::create([

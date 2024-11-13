@@ -19,7 +19,7 @@ class UserSeeder extends Seeder
         $userRole = Role::firstOrCreate(['name' => 'user']);
 
         // Create users
-        $adminUser = User::create([
+        $superadminUser = User::create([
             'name' => 'SuperAdmin User',
             'email' => 'superadmin@example.com',
             'password' => bcrypt('password'), // Change this to a secure password
@@ -44,6 +44,7 @@ class UserSeeder extends Seeder
         ]);
 
         // Assign roles to users
+         $superadminUser->assignRole($superadminRole);
         $adminUser->assignRole($adminRole);
         $cashierUser->assignRole($cashierRole);
         $regularUser->assignRole($userRole);
