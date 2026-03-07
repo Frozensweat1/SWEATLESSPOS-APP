@@ -121,10 +121,20 @@
                                             <div class="dropdown-menu dropdown-menu-end border py-0"
                                                 aria-labelledby="customer-dropdown-0">
                                                 <div class="bg-white py-2">
-
+                                                    <a class="dropdown-item text-primary"
+                                                        wire:click="viewReceipt({{ $sale->id }})"
+                                                        href="javascript:void(0)">
+                                                        <i class="fas fa-eye me-2"></i>View Receipt
+                                                    </a>
+                                                    <a class="dropdown-item text-info" href="javascript:void(0)"
+                                                        onclick="printSaleReceipt({{ $sale->id }})">
+                                                        <i class="fas fa-print me-2"></i>Print Receipt
+                                                    </a>
+                                                    <hr class="my-1">
                                                     <a class="dropdown-item text-success"
                                                         wire:click="Refund({{ $detail->id }})"
-                                                        href="javascript:void(0)">Refund
+                                                        href="javascript:void(0)">
+                                                        <i class="fas fa-undo me-2"></i>Refund
                                                     </a>
                                                 </div>
                                             </div>
@@ -159,4 +169,190 @@
     @if ($isRefundMode)
         @include('livewire.refund-formmodal')
     @endif
+
+    <!-- View Receipt Modal -->
+    @if ($showViewReceipt && $viewingSale)
+        <div class="modal fade show" id="viewReceiptModal" data-bs-keyboard="false" data-bs-backdrop="static"
+            style="display: block;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-receipt me-2"></i>Sale Receipt #{{ $viewingSale->id }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white"
+                            wire:click="closeViewReceipt"></button>
+                    </div>
+                    <div class="modal-body" id="viewSaleReceipt"
+                        style="font-family: 'Courier New', monospace; font-size: 12px;">
+
+                        <!-- Receipt Header -->
+                        <div
+                            style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #333; padding-bottom: 15px;">
+                            <img src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}" alt="Company Logo"
+                                style="height: 50px; margin-bottom: 10px;">
+                            <h4 style="margin: 5px 0; font-weight: bold;">
+                                {{ $settings->site_name ?? 'Sweatless POS' }}</h4>
+                            <p style="margin: 2px 0; font-size: 11px;">
+                                {{ $settings->receipt_header ?? 'In God We Trust!' }}</p>
+                        </div>
+
+                        <!-- Transaction Info -->
+                        <div style="margin-bottom: 15px; font-size: 11px;">
+                            <p style="margin: 3px 0;"><strong>Receipt #:</strong> {{ $viewingSale->id }}</p>
+                            <p style="margin: 3px 0;"><strong>Date:</strong>
+                                {{ $viewingSale->created_at->format('M d, Y') }}</p>
+                            <p style="margin: 3px 0;"><strong>Time:</strong>
+                                {{ $viewingSale->created_at->format('H:i:s') }}</p>
+                            <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                        </div>
+
+                        <!-- Customer Info -->
+                        <div style="margin-bottom: 15px; font-size: 11px;">
+                            <p style="margin: 3px 0;"><strong>Customer:</strong></p>
+                            @if ($viewingCustomer)
+                                <p style="margin: 2px 0;">{{ $viewingCustomer->name }}</p>
+                                <p style="margin: 2px 0;">{{ $viewingCustomer->phone ?? '' }}</p>
+                            @else
+                                <p style="margin: 2px 0;">Walk-in Customer</p>
+                            @endif
+                            <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                        </div>
+
+                        <!-- Barcode -->
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <img src="data:image/png;base64,{{ $viewingSaleBarcode }}" alt="Sale Barcode"
+                                style="height: 40px;">
+                        </div>
+
+                        <!-- Items Table -->
+                        <div style="margin-bottom: 15px;">
+                            <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 1px dashed #999;">
+                                        <th style="text-align: left; padding: 3px 0;">Item</th>
+                                        <th style="text-align: center; padding: 3px 0;">Qty</th>
+                                        <th style="text-align: right; padding: 3px 0;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($viewingSale->saleDetails as $detail)
+                                        <tr>
+                                            <td style="padding: 3px 0;">{{ $detail->product->name }}</td>
+                                            <td style="text-align: center; padding: 3px 0;">{{ $detail->quantity }}
+                                            </td>
+                                            <td style="text-align: right; padding: 3px 0;">
+                                                GHS{{ number_format($detail->subtotal, 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                        </div>
+
+                        <!-- Total -->
+                        <div style="margin-bottom: 15px; font-size: 12px; font-weight: bold;">
+                            <div
+                                style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding: 8px 0;">
+                                <span>TOTAL:</span>
+                                <span>GHS{{ number_format($viewingSale->total_amount, 2) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Payment Status -->
+                        <div
+                            style="margin-bottom: 15px; font-size: 10px; background-color: #f5f5f5; padding: 8px; border-radius: 4px;">
+                            <p style="margin: 3px 0;"><strong>Payment Method:</strong>
+                                {{ ucfirst(str_replace('_', ' ', $viewingSale->payment_method)) }}</p>
+                            <p style="margin: 3px 0;"><strong>Status:</strong>
+                                @if ($viewingSale->payment_status === 'paid')
+                                    <span style="color: green; font-weight: bold;">✓ PAID</span>
+                                @elseif ($viewingSale->payment_status === 'pending')
+                                    <span style="color: orange; font-weight: bold;">⏳ PENDING</span>
+                                @else
+                                    <span style="color: blue; font-weight: bold;">⚠ PARTIAL</span>
+                                @endif
+                            </p>
+                        </div>
+
+                        <div
+                            style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #999; font-size: 11px;">
+                            <p style="margin: 5px 0;">
+                                {{ $settings->receipt_footer ?? 'Thank you for your purchase!' }}</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button class="btn btn-secondary" type="button" wire:click="closeViewReceipt">
+                            <i class="fas fa-times me-2"></i>Close
+                        </button>
+                        <button class="btn btn-info" type="button" onclick="printViewSaleReceipt()">
+                            <i class="fas fa-print me-2"></i>Print
+                        </button>
+                        <button class="btn btn-success" type="button" onclick="downloadViewSaleReceipt()">
+                            <i class="fas fa-download me-2"></i>Download PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show"></div>
+    @endif
 </div>
+
+@once
+    @push('js')
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    @endpush
+@endonce
+
+@script
+    <script>
+        window.printViewSaleReceipt = function() {
+            var receiptContent = document.getElementById('viewSaleReceipt');
+            if (!receiptContent) return;
+
+            var printWindow = window.open('', '', 'width=800,height=600');
+            if (!printWindow) return;
+
+            var htmlContent = '<!DOCTYPE html><html><head><title>Receipt</title><style>' +
+                'body { font-family: "Courier New", monospace; font-size: 12px; margin: 10px; padding: 0; } ' +
+                'table { width: 100%; border-collapse: collapse; } ' +
+                'th, td { padding: 3px; border: none; } ' +
+                'img { max-width: 100%; height: auto; } ' +
+                '@media print { body { margin: 0; padding: 0; } }' +
+                '</style></head><body>' + receiptContent.innerHTML + '</body></html>';
+
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            printWindow.focus();
+
+            setTimeout(function() {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+        };
+
+        window.downloadViewSaleReceipt = function() {
+            const element = document.getElementById('viewSaleReceipt');
+            if (!element || typeof html2pdf === 'undefined') return;
+
+            const opt = {
+                margin: 5,
+                filename: 'receipt_sale.pdf',
+                image: {
+                    type: 'jpeg',
+                    quality: 0.98
+                },
+                html2canvas: {
+                    scale: 2
+                },
+                jsPDF: {
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                }
+            };
+            html2pdf().set(opt).from(element).save();
+        };
+    </script>
+@endscript

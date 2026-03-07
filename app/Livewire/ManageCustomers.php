@@ -9,8 +9,9 @@ use Livewire\Attributes\Rule;
 use Livewire\WithFileUploads;
 use App\Models\Customer;
 use App\Models\Notification;
+use App\Traits\StoreScoped;
 use Illuminate\Support\Facades\Auth;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Facades\Response;
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\Response;
 #[Layout('layouts.app')]
 class ManageCustomers extends Component
 {
-    use WithFileUploads, WithPagination, LivewireAlert;
+    use WithFileUploads, WithPagination, StoreScoped;
 
     protected $paginationTheme = 'bootstrap'; // Using Bootstrap for pagination UI
     public $name, $address, $image, $email, $phone, $loyalty_points = 0, $customerId;
@@ -46,35 +47,43 @@ class ManageCustomers extends Component
 
     public function mount()
     {
+        $this->initStoreId();
         $this->pageTitle = 'Data';
         $this->componentName = 'Customers';
     }
     public function confirmBulkDelete()
     {
         if (count($this->selectedCustomers) > 0) {
-            $this->alert('warning', 'Are you sure?', [
-                'text' => 'You are about to delete selected customers.',
-                'showConfirmButton' => true,
-                'confirmButtonText' => 'Yes, Delete',
-                'onConfirmed' => 'bulkDeleteCustomers',
-                'showCancelButton' => true,
-                'cancelButtonText' => 'Cancel',
-            ]);
+            LivewireAlert::title('Are you sure?')
+                ->html('You are about to delete selected customers.')
+                ->warning()
+                ->onConfirm('bulkDeleteCustomers')
+                ->withConfirmButton('Yes, Delete')
+                ->withCancelButton('Cancel')
+                ->show();
         } else {
-            $this->alert('warning', 'No customers selected.');
+            LivewireAlert::warning('No customers selected.')
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
     public function bulkDeleteCustomers()
     {
         foreach ($this->selectedCustomers as $customerId) {
-            $customer = Customer::find($customerId);
+            $customer = Customer::where('store_id', $this->getStoreId())->find($customerId);
             if ($customer) {
                 $customer->delete();
                 $this->logNotification('Customer Deleted', 'Deleted customer: ' . $customer->name);
             }
         }
         $this->selectedCustomers = [];
-        $this->alert('success', 'Selected customers deleted successfully.');
+        LivewireAlert::title('Success')
+            ->text('Selected customers deleted successfully.')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
     }
 
     public function updatedSelectAll($value)
@@ -88,7 +97,7 @@ class ManageCustomers extends Component
     }
     public function getCustomersProperty()
     {
-        $query = Customer::query()
+        $query = Customer::where('store_id', $this->getStoreId())
             ->when($this->searchengine, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->searchengine . '%')
@@ -132,7 +141,7 @@ class ManageCustomers extends Component
     public function Edit($id)
     {
         $this->resetUI();
-        $record = Customer::find($id, ['id', 'name', 'email', 'phone', 'address', 'image']);
+        $record = Customer::where('store_id', $this->getStoreId())->find($id, ['id', 'name', 'email', 'phone', 'address', 'image']);
         $this->selected_id = $record->id;
         $this->name = $record->name;
         $this->email = $record->email;
@@ -150,6 +159,7 @@ class ManageCustomers extends Component
             'email' => $this->email,
             'phone' => $this->phone,
             'address' => $this->address,
+            'store_id' => $this->getStoreId(),
         ]);
         // Handle image upload, if provided
         if ($this->image) {
@@ -160,14 +170,19 @@ class ManageCustomers extends Component
         }
         $this->resetUI();
         $this->logNotification('Customer Created', 'Added customer: ' . $customer->name);
-        $this->alert('success', 'Customer Registered Successfully!');
+        LivewireAlert::title('Success')
+            ->text('Customer Registered Successfully!')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
     }
 
     public function Update()
     {
         $this->validate($this->rules());
         if ($this->selected_id) {
-            $customer = Customer::find($this->selected_id);
+            $customer = Customer::where('store_id', $this->getStoreId())->find($this->selected_id);
             $data = [
                 'name' => $this->name,
                 'email' => $this->email,
@@ -182,7 +197,12 @@ class ManageCustomers extends Component
             $customer->update($data);
             $this->resetUI();
             $this->logNotification('Customer Updated', 'Updated customer: ' . $customer->name);
-            $this->alert('success', 'Customer Record Updated!');
+            LivewireAlert::title('Success')
+                ->text('Customer Updated Successfully!')
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
     public function export()
@@ -252,26 +272,23 @@ class ManageCustomers extends Component
     public function Delete($id)
     {
         $this->selected_id = $id;
-        $this->alert('warning', 'Are you sure you want to delete?', [
-            'position' => 'center',
-            'timer' => 6000,
-            'toast' => false,
-            'showConfirmButton' => true,
-            'onConfirmed' => 'confirmedDeletion',
-            'showCancelButton' => true,
-            'width' => '400',
-        ]);
+        LivewireAlert::title('Are you sure you want to delete?')
+            ->warning()
+            ->onConfirm('confirmedDeletion')
+            ->withConfirmButton('Yes, Delete')
+            ->withCancelButton('Cancel')
+            ->show();
     }
 
     public function confirmedDeletion()
     {
-        $customer = Customer::find($this->selected_id);
+        $customer = Customer::where('store_id', $this->getStoreId())->find($this->selected_id);
         if ($customer) {
             $customer->delete();
             $this->logNotification('Customer Deleted', 'Deleted customer: ' . $customer->name);
-            $this->alert('success', 'Successfully Deleted ' . $customer->name);
+            LivewireAlert::success('Successfully Deleted ' . $customer->name)->show();
         } else {
-            $this->alert('error', 'Unable to delete customer record.');
+            LivewireAlert::error('Unable to delete customer record.')->show();
         }
     }
 

@@ -9,8 +9,10 @@ use App\Livewire\InventoryReport;
 use App\Livewire\MakeSales;
 use App\Livewire\ManageCategory;
 use App\Livewire\ManageCustomers;
+use App\Livewire\ManageDebtors;
 use App\Livewire\ManageExpenditures;
 use App\Livewire\ManageProduct;
+use App\Livewire\ManageStore;
 use App\Livewire\SaleReport;
 use App\Livewire\ManageReturns;
 use App\Livewire\ManageRoles;
@@ -20,6 +22,7 @@ use App\Livewire\ManageUser;
 use App\Livewire\Notifications;
 use App\Livewire\Settings;
 use App\Livewire\SystemLogs;
+use App\Helpers\StoreHelper;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -42,6 +45,16 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/manage-users', ManageUser::class)->name('manage.users');
         Route::get('/add-users', AddUser::class)->name('add.users');
         Route::get('/users/{id}/edit', EditUser::class)->name('edit.user');
+        Route::get('/manage-stores', ManageStore::class)->name('manage.stores');
+        Route::post('/switch-store', function (\Illuminate\Http\Request $request) {
+            $validated = $request->validate([
+                'store_id' => ['required', 'integer', 'exists:stores,id'],
+            ]);
+
+            StoreHelper::setCurrentStore((int) $validated['store_id']);
+
+            return back();
+        })->name('switch.store');
         Route::get('/system-settings', Settings::class)->name('system.settings');
         Route::get('/manage-roles', ManageRoles::class)->name('manage.roles');
         Route::get('/system-notifications', Notifications::class)->name('manage.notifications');
@@ -54,6 +67,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/manage-categories', ManageCategory::class)->name('manage.categories');
         Route::get('/manage-products', ManageProduct::class)->name('manage-products');
         Route::get('/manage-sales', ManageSales::class)->name('manage.sales');
+        Route::get('/manage-debtors', ManageDebtors::class)->name('manage.debtors');
         Route::get('/make-sales', MakeSales::class)->name('make.sales');
         Route::get('/manage-expenditure', ManageExpenditures::class)->name('manage.expenditure');
         Route::get('/manage-returns', ManageReturns::class)->name('manage.returns');

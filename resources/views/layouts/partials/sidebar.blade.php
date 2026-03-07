@@ -1,11 +1,11 @@
-<nav class="navbar navbar-light navbar-vertical navbar-expand-xl">
+<nav class="px-0 navbar navbar-light navbar-vertical navbar-expand-xl px-xl-3">
     <script>
         var navbarStyle = localStorage.getItem("navbarStyle");
         if (navbarStyle && navbarStyle !== 'transparent') {
             document.querySelector('.navbar-vertical').classList.add(`navbar-${navbarStyle}`);
         }
     </script>
-    <div class="d-flex align-items-center">
+    <div class="px-3 py-2 d-flex align-items-center px-xl-0">
         <div class="toggle-icon-wrapper">
             <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle" data-bs-toggle="tooltip"
                 data-bs-placement="left" title="Toggle Navigation">
@@ -14,17 +14,46 @@
                 </span>
             </button>
         </div>
-        <a class="navbar-brand" href="{{ route('dashboard') }}">
-            <div class="d-flex align-items-center py-3">
-                <img class="me-2" src="{{ 'storage/' . $settings->logo ?? asset('assets/img/logo.png') }}"
-                    alt="" width="30" />
-                <span class="font-sans-serif">{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}</span>
+        <a class="navbar-brand d-none d-md-flex align-items-center ms-2" href="{{ route('dashboard') }}">
+            <div class="d-flex align-items-center w-100">
+                <img class="navbar-logo" src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}"
+                    alt="{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}"
+                    style="height: 36px; width: auto; object-fit: contain;" />
+                <div class="ms-2 d-flex flex-column justify-content-center">
+                    <span class="font-sans-serif fw-bold text-dark"
+                        style="font-size: 15px; line-height: 1.2;">{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}</span>
+                    <small class="text-muted" style="font-size: 11px;">Management System</small>
+                </div>
             </div>
         </a>
     </div>
     <div class="collapse navbar-collapse" id="navbarVerticalCollapse">
-        <div class="navbar-vertical-content scrollbar">
-            <ul class="navbar-nav flex-column mb-3" id="navbarVerticalNav">
+        <div class="px-3 py-2 navbar-vertical-content scrollbar px-xl-0">
+            @role('super-admin')
+                @php
+                    $stores = \App\Models\Store::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+                    $currentStoreId = session('current_store_id') ?? auth()->user()?->store_id;
+                @endphp
+                <div class="mb-3 px-2">
+                    <label for="sidebar-store-selector" class="form-label text-uppercase text-600 fw-bold mb-1"
+                        style="font-size: 10px;">
+                        Active Store
+                    </label>
+                    <form action="{{ route('switch.store') }}" method="POST">
+                        @csrf
+                        <select id="sidebar-store-selector" name="store_id" class="form-select form-select-sm"
+                            onchange="this.form.submit()">
+                            @foreach ($stores as $store)
+                                <option value="{{ $store->id }}" @selected((int) $currentStoreId === (int) $store->id)>
+                                    {{ $store->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
+            @endrole
+
+            <ul class="mb-3 navbar-nav flex-column" id="navbarVerticalNav">
                 <!-- Dashboard Section -->
                 @role('super-admin|admin|cashier')
                     <li class="nav-item">
@@ -61,7 +90,7 @@
                 <!-- User Management Section (Super Admin Only) -->
                 @role('super-admin')
                     <li class="nav-item">
-                        <a class="nav-link dropdown-indicator {{ Request::routeIs('manage.roles', 'manage.users', 'add.users') ? 'active' : '' }}"
+                        <a class="nav-link dropdown-indicator {{ Request::routeIs('manage.roles', 'manage.users', 'add.users', 'manage.stores') ? 'active' : '' }}"
                             href="#users" role="button" data-bs-toggle="collapse" aria-expanded="false"
                             aria-controls="users">
                             <div class="d-flex align-items-center">
@@ -69,7 +98,7 @@
                                 <span class="nav-link-text ps-1">User Management</span>
                             </div>
                         </a>
-                        <ul class="nav collapse {{ Request::routeIs('manage.roles', 'manage.users', 'add.users') ? 'show' : '' }}"
+                        <ul class="nav collapse {{ Request::routeIs('manage.roles', 'manage.users', 'add.users', 'manage.stores') ? 'show' : '' }}"
                             id="users">
                             <li class="nav-item">
                                 <a class="nav-link {{ Request::routeIs('manage.roles') ? 'active' : '' }}"
@@ -96,6 +125,17 @@
                                 </a>
                             </li>
                         </ul>
+                    </li>
+
+                    <!-- Store Management -->
+                    <li class="nav-item">
+                        <a class="nav-link {{ Request::routeIs('manage.stores') ? 'active' : '' }}"
+                            href="{{ route('manage.stores') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon"><span class="fas fa-sitemap"></span></span>
+                                <span class="nav-link-text ps-1">Manage Stores</span>
+                            </div>
+                        </a>
                     </li>
                 @endrole
 
@@ -208,12 +248,20 @@
                                 </div>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::routeIs('manage.debtors') ? 'active' : '' }}"
+                                href="{{ route('manage.debtors') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-text ps-1">Manage Debtors</span>
+                                </div>
+                            </a>
+                        </li>
                     </ul>
                 @endrole
 
                 <!-- Reports Section -->
                 @role(['super-admin', 'admin', 'cashier'])
-                    <a class="nav-link dropdown-indicator {{ Request::routeIs('sale.report', 'inventory.report', 'customer.report', 'financial.report') ? 'active' : '' }}"
+                    <a class="nav-link dropdown-indicator {{ Request::routeIs('sale.report', 'inventory.report', 'customer.report', 'financial.report', 'manage.debtors') ? 'active' : '' }}"
                         href="#reports" role="button" data-bs-toggle="collapse" aria-expanded="false"
                         aria-controls="reports">
                         <div class="d-flex align-items-center">
@@ -221,7 +269,7 @@
                             <span class="nav-link-text ps-1">Reports</span>
                         </div>
                     </a>
-                    <ul class="nav collapse {{ Request::routeIs('sale.report', 'inventory.report', 'customer.report', 'financial.report', 'customerreport.detail') ? 'show' : '' }}"
+                    <ul class="nav collapse {{ Request::routeIs('sale.report', 'inventory.report', 'customer.report', 'financial.report', 'customerreport.detail', 'manage.debtors') ? 'show' : '' }}"
                         id="reports">
                         <li class="nav-item">
                             <a class="nav-link {{ Request::routeIs('sale.report') ? 'active' : '' }}"

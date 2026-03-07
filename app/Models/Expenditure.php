@@ -18,6 +18,7 @@ class Expenditure extends Model
         'amount',
         'category',
         'expenditure_date',
+        'store_id',
         'user_id',
         'supplier_id',
         'notes',

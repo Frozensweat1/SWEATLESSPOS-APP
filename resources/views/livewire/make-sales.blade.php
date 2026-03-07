@@ -10,7 +10,7 @@
 
             </div>
         </div>
-        <div class="card-body p-2">
+        <div class="p-2 card-body">
             <div class="mb-3">
                 <label class="form-label" for="basic-form-name">Barcode</label>
                 <input class="form-control form-control-sm" type="text" wire:model="barcode"
@@ -35,7 +35,7 @@
                 </div>
             </div>
             <div class="table-responsive scrollbar">
-                <table class="table table-sm table-striped fs--1 mb-0 overflow-hidden">
+                <table class="table mb-0 overflow-hidden table-sm table-striped fs--1">
                     <thead class="bg-200 text-900">
                         <tr>
                             <th scope="col">Product</th>
@@ -59,7 +59,7 @@
                                 <td class="text-end">
                                     <div>
                                         <button
-                                            wire:click="removeProductFromCart({{ $index }})"class="btn p-0 ms-2"
+                                            wire:click="removeProductFromCart({{ $index }})"class="p-0 btn ms-2"
                                             type="button" data-bs-toggle="tooltip" data-bs-placement="top"
                                             title="Delete">
                                             <span class="text-500 fas fa-trash-alt"></span>
@@ -99,15 +99,21 @@
             <div class="col-md-auto">
                 <!-- Payment Method and Checkout -->
                 <select class="form-control form-control-sm" wire:model="payment_method">
-                    <option selected value="cash">Cash</option>
-                    <option value="credit_card">Card</option>
-                    <option value="mobile_money">MoMo</option>
+                    <option value="">Select Payment Method</option>
+                    <optgroup label="Immediate Payment">
+                        <option value="cash">Cash</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="mobile_money">Mobile Money</option>
+                    </optgroup>
+                    <optgroup label="Credit Sales">
+                        <option value="credit">Credit/Invoice</option>
+                    </optgroup>
                 </select>
             </div>
 
             <div class="col-md-auto">
                 <button type="button" wire:click="processSale"
-                    class="btn btn-sm btn-outline-primary rounded-pill me-1  d-flex align-items-center float-end"
+                    class="btn btn-sm btn-outline-primary rounded-pill me-1 d-flex align-items-center float-end"
                     wire:loading.attr="disabled" wire:loading.class="disabled"
                     wire:loading.class.remove="btn-outline-primary" wire:loading.class.add="btn-primary">
                     <!-- Spinner -->
@@ -130,87 +136,477 @@
         @if ($showReceipt)
             @include('livewire.modals.receipt-modal-header')
 
-            <div class="text-center mb-3">
-                <!-- Display Company Logo if available -->
-                @if ($settings->logo)
-                    <img src="{{ asset('storage/' . $settings->logo) }}" alt="Company Logo" class="img-fluid"
-                        style="max-width: 150px;">
-                @endif
-                <h5>{{ $settings->site_name ?? 'Sweatless POS' }}</h5>
-                <!-- Receipt Footer Text -->
-                <p class="text-center">{{ $settings->receipt_header ?? 'In God We Trust!' }}</p>
+            <!-- Receipt Header -->
+            <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #333; padding-bottom: 15px;">
+                <img src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}" alt="Company Logo"
+                    style="height: 50px; margin-bottom: 10px;">
+                <h4 style="margin: 5px 0; font-weight: bold;">{{ $settings->site_name ?? 'Sweatless POS' }}</h4>
+                <p style="margin: 2px 0; font-size: 11px;">{{ $settings->receipt_header ?? 'In God We Trust!' }}</p>
+                <hr style="margin: 10px 0; border: none; border-top: 1px dashed #999;">
             </div>
 
-            <h6><b>Company Name:</b> {{ $settings->site_name }}</h6>
-            <h6><b>Company Tel:</b> {{ $settings->contact_phone }}</h6>
-            <h6><b>Email:</b> {{ $settings->contact_email }}</h6>
-            <h6><b>Address:</b> {{ $settings->address }}</h6>
-            <h6><b>Cashier:</b> {{ auth()->user()->name }}</h6>
+            <!-- Company & Transaction Info -->
+            <div style="margin-bottom: 15px; font-size: 11px;">
+                <p style="margin: 3px 0;"><strong>Receipt #:</strong> {{ $currentSale->id ?? 'N/A' }}</p>
+                <p style="margin: 3px 0;"><strong>Date:</strong> {{ now()->format('M d, Y') }}</p>
+                <p style="margin: 3px 0;"><strong>Time:</strong> {{ now()->format('H:i:s') }}</p>
+                <p style="margin: 3px 0;"><strong>Cashier:</strong> {{ auth()->user()->name }}</p>
+                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+            </div>
+
+            <!-- Company Details -->
+            <div style="margin-bottom: 15px; font-size: 10px;">
+                <p style="margin: 2px 0;"><strong>{{ $settings->site_name ?? 'Sweatless POS' }}</strong></p>
+                <p style="margin: 2px 0;">{{ $settings->address ?? '' }}</p>
+                <p style="margin: 2px 0;">Tel: {{ $settings->contact_phone ?? '' }}</p>
+                <p style="margin: 2px 0;">Email: {{ $settings->contact_email ?? '' }}</p>
+                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+            </div>
+
             <!-- Customer Information -->
-            @if ($buying_customer)
-                <h6><b>Customer Name:</b> {{ $buying_customer->name }}</h6>
-                <h6><b>Customer Phone:</b> {{ $buying_customer->phone }}</h6>
-            @else
-                <h6><b>Customer Name:</b> Walk-in Customer</h6>
-            @endif
-
-            <!-- Display Barcode -->
-            <div class="text-center my-3">
-                <img src="data:image/png;base64,{{ $saleBarcode }}" alt="Sale Barcode">
+            <div style="margin-bottom: 15px; font-size: 11px;">
+                <p style="margin: 3px 0;"><strong>Customer:</strong></p>
+                @if ($buying_customer)
+                    <p style="margin: 2px 0;">Name: {{ $buying_customer->name }}</p>
+                    <p style="margin: 2px 0;">Phone: {{ $buying_customer->phone ?? 'N/A' }}</p>
+                @else
+                    <p style="margin: 2px 0;">Walk-in Customer</p>
+                @endif
+                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
             </div>
 
-            <p><strong>Date:</strong> {{ now()->format('Y-m-d H:i') }}</p>
+            <!-- Sales Barcode -->
+            <div style="text-align: center; margin-bottom: 15px;">
+                <img src="data:image/png;base64,{{ $saleBarcode }}" alt="Sale Barcode" style="height: 40px;">
+                <p style="margin: 5px 0; font-size: 10px; font-weight: bold;">{{ $currentSale->id ?? 'N/A' }}</p>
+            </div>
 
-            <!-- Cart Items -->
-            <div class="table-responsive scrollbar">
-                <table class="table">
+            <!-- Items Table -->
+            <div style="margin-bottom: 15px;">
+                <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
                     <thead>
-                        <tr>
-                            <th scope="col">Product</th>
-                            <th scope="col">Price</th>
-                            <th scope="col">Quantity</th>
-                            <th scope="col">Total</th>
+                        <tr style="border-bottom: 1px dashed #999;">
+                            <th style="text-align: left; padding: 3px 0;">Item</th>
+                            <th style="text-align: center; padding: 3px 0;">Qty</th>
+                            <th style="text-align: right; padding: 3px 0;">Price</th>
+                            <th style="text-align: right; padding: 3px 0;">Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($cart as $item)
                             <tr>
-                                <td>{{ $item['name'] }}</td>
-                                <td>Ghs{{ number_format($item['price_per_unit'], 2) }}</td>
-                                <td>{{ $item['quantity'] }}</td>
-                                <td>Ghs{{ number_format($item['total'], 2) }}</td>
+                                <td style="text-align: left; padding: 3px 0; word-wrap: break-word;">
+                                    {{ $item['name'] }}</td>
+                                <td style="text-align: center; padding: 3px 0;">{{ $item['quantity'] }}</td>
+                                <td style="text-align: right; padding: 3px 0;">
+                                    GHS{{ number_format($item['price_per_unit'], 2) }}</td>
+                                <td style="text-align: right; padding: 3px 0;">
+                                    GHS{{ number_format($item['total'], 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
             </div>
 
-            <hr>
-            <p><strong>Total: Ghs{{ number_format($total_amount, 2) }}</strong></p>
-            <hr>
+            <!-- Payment Summary -->
+            <div style="margin-bottom: 15px; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                    <span><strong>Subtotal:</strong></span>
+                    <span>GHS{{ number_format($total_amount, 2) }}</span>
+                </div>
+                <div
+                    style="display: flex; justify-content: space-between; margin: 5px 0; font-weight: bold; border-top: 1px dashed #999; border-bottom: 2px solid #333; padding: 8px 0;">
+                    <span>TOTAL:</span>
+                    <span>GHS{{ number_format($total_amount, 2) }}</span>
+                </div>
+            </div>
 
-            <!-- Receipt Footer Text -->
-            <p class="text-center">{{ $settings->receipt_footer ?? 'Thank you for your purchase!' }}</p>
+            <!-- Payment Details -->
+            <div
+                style="margin-bottom: 15px; font-size: 10px; background-color: #f5f5f5; padding: 8px; border-radius: 4px;">
+                <p style="margin: 3px 0;"><strong>Payment Method:</strong>
+                    @php
+                        $methods = [
+                            'cash' => 'Cash',
+                            'credit_card' => 'Credit Card',
+                            'mobile_money' => 'Mobile Money',
+                            'credit' => 'Credit/Invoice',
+                        ];
+                    @endphp
+                    {{ $methods[$payment_method] ?? ucfirst($payment_method) }}
+                </p>
+                <p style="margin: 3px 0; color: {{ $currentSale->payment_status === 'paid' ? 'green' : 'orange' }};">
+                    <strong>Status:</strong>
+                    <span style="text-transform: uppercase; font-weight: bold;">
+                        @if ($currentSale->payment_status === 'paid')
+                            ✓ PAID
+                        @elseif ($currentSale->payment_status === 'pending')
+                            ⏳ PENDING
+                        @else
+                            ⚠ PARTIAL
+                        @endif
+                    </span>
+                </p>
+                @if ($currentSale->payment_status !== 'paid')
+                    <p style="margin: 3px 0;"><strong>Amount Paid:</strong>
+                        GHS{{ number_format($currentSale->amount_paid ?? 0, 2) }}</p>
+                    <p style="margin: 3px 0; color: red;"><strong>Amount Due:</strong>
+                        GHS{{ number_format($currentSale->amount_due ?? 0, 2) }}</p>
+                    @if ($currentSale->due_date)
+                        <p style="margin: 3px 0;"><strong>Due Date:</strong>
+                            {{ \Carbon\Carbon::parse($currentSale->due_date)->format('M d, Y') }}</p>
+                    @endif
+                @endif
+            </div>
+
+            <!-- Footer Message -->
+            <div
+                style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #999; font-size: 11px;">
+                <p style="margin: 5px 0; font-weight: bold;">
+                    {{ $settings->receipt_footer ?? 'Thank you for your purchase!' }}</p>
+                <p style="margin: 5px 0; font-size: 10px; color: #666;">{{ $settings->site_name ?? 'Sweatless POS' }}
+                    - Point of Sale System</p>
+            </div>
 
             @include('livewire.modals.receipt-modal-footer')
         @endif
 
+        <!-- Recent Sales Section -->
+        <div class="mt-4 card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Sales (Last 15)</h5>
+            </div>
+            <div class="p-0 card-body">
+                <div class="table-responsive">
+                    <table class="table mb-0 table-sm table-hover">
+                        <thead class="bg-200">
+                            <tr>
+                                <th class="text-nowrap">Sale ID</th>
+                                <th class="text-nowrap">Customer</th>
+                                <th class="text-nowrap">Amount</th>
+                                <th class="text-nowrap">Status</th>
+                                <th class="text-nowrap">Payment Method</th>
+                                <th class="text-nowrap">Date</th>
+                                <th class="text-nowrap">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentSales as $sale)
+                                <tr>
+                                    <td><strong>#{{ $sale->id }}</strong></td>
+                                    <td>{{ $sale->customer?->name ?? 'Walk-in Customer' }}</td>
+                                    <td>GHS{{ number_format($sale->total_amount, 2) }}</td>
+                                    <td>
+                                        @if ($sale->payment_status === 'paid')
+                                            <span class="badge bg-success">Paid</span>
+                                        @elseif ($sale->payment_status === 'pending')
+                                            <span class="badge bg-warning">Pending</span>
+                                        @else
+                                            <span class="badge bg-info">Partial</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ ucfirst(str_replace('_', ' ', $sale->payment_method)) }}</td>
+                                    <td>{{ $sale->created_at->format('M d, Y H:i') }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary"
+                                            wire:click="viewReceipt({{ $sale->id }})" title="View Receipt">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="py-3 text-center text-muted">No sales yet today</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Receipt Modal -->
+        @if ($showViewReceipt && $viewingSale)
+            <div class="modal fade show" id="viewReceiptModal" data-bs-keyboard="false" data-bs-backdrop="static"
+                style="display: block;">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="text-white modal-header bg-info">
+                            <h5 class="modal-title">
+                                <i class="fas fa-receipt me-2"></i>Sale Receipt #{{ $viewingSale->id }}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white"
+                                wire:click="closeViewReceipt"></button>
+                        </div>
+                        <div class="modal-body" id="viewReceipt"
+                            style="font-family: 'Courier New', monospace; font-size: 12px;">
+
+                            <!-- Receipt Header -->
+                            <div
+                                style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #333; padding-bottom: 15px;">
+                                <img src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}"
+                                    alt="Company Logo" style="height: 50px; margin-bottom: 10px;">
+                                <h4 style="margin: 5px 0; font-weight: bold;">
+                                    {{ $settings->site_name ?? 'Sweatless POS' }}</h4>
+                                <p style="margin: 2px 0; font-size: 11px;">
+                                    {{ $settings->receipt_header ?? 'In God We Trust!' }}</p>
+                            </div>
+
+                            <!-- Transaction Info -->
+                            <div style="margin-bottom: 15px; font-size: 11px;">
+                                <p style="margin: 3px 0;"><strong>Receipt #:</strong> {{ $viewingSale->id }}</p>
+                                <p style="margin: 3px 0;"><strong>Date:</strong>
+                                    {{ $viewingSale->created_at->format('M d, Y') }}</p>
+                                <p style="margin: 3px 0;"><strong>Time:</strong>
+                                    {{ $viewingSale->created_at->format('H:i:s') }}</p>
+                                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                            </div>
+
+                            <!-- Shop Contact Details & Location -->
+                            <div style="margin-bottom: 15px; font-size: 10px;">
+                                <p style="margin: 2px 0;">
+                                    <strong>{{ $settings->site_name ?? 'Sweatless POS' }}</strong></p>
+                                <p style="margin: 2px 0;">{{ $settings->address ?? '' }}</p>
+                                <p style="margin: 2px 0;">Tel: {{ $settings->contact_phone ?? '' }}</p>
+                                <p style="margin: 2px 0;">Email: {{ $settings->contact_email ?? '' }}</p>
+                                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                            </div>
+
+                            <!-- Customer Info -->
+                            <div style="margin-bottom: 15px; font-size: 11px;">
+                                <p style="margin: 3px 0;"><strong>Customer:</strong></p>
+                                @if ($viewingCustomer)
+                                    <p style="margin: 2px 0;">{{ $viewingCustomer->name }}</p>
+                                    <p style="margin: 2px 0;">{{ $viewingCustomer->phone ?? '' }}</p>
+                                @else
+                                    <p style="margin: 2px 0;">Walk-in Customer</p>
+                                @endif
+                                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                            </div>
+
+                            <!-- Barcode -->
+                            <div style="text-align: center; margin-bottom: 15px;">
+                                <img src="data:image/png;base64,{{ $viewingSaleBarcode }}" alt="Sale Barcode"
+                                    style="height: 40px;">
+                            </div>
+
+                            <!-- Items Table -->
+                            <div style="margin-bottom: 15px;">
+                                <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px dashed #999;">
+                                            <th style="text-align: left; padding: 3px 0;">Item</th>
+                                            <th style="text-align: center; padding: 3px 0;">Qty</th>
+                                            <th style="text-align: right; padding: 3px 0;">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($viewingSale->saleDetails as $detail)
+                                            <tr>
+                                                <td style="padding: 3px 0;">
+                                                    @if ($detail->product)
+                                                        {{ $detail->product->name }}
+                                                    @else
+                                                        <span style="color: #dc3545;">
+                                                            <i
+                                                                class="fas fa-trash me-1"></i>{{ $detail->product_name ?? 'Deleted Product' }}
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td style="text-align: center; padding: 3px 0;">
+                                                    {{ $detail->quantity }}</td>
+                                                <td style="text-align: right; padding: 3px 0;">
+                                                    GHS{{ number_format($detail->subtotal, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                            </div>
+
+                            <!-- Total -->
+                            <div style="margin-bottom: 15px; font-size: 12px; font-weight: bold;">
+                                <div
+                                    style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding: 8px 0;">
+                                    <span>TOTAL:</span>
+                                    <span>GHS{{ number_format($viewingSale->total_amount, 2) }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Payment Status -->
+                            <div
+                                style="margin-bottom: 15px; font-size: 10px; background-color: #f5f5f5; padding: 8px; border-radius: 4px;">
+                                <p style="margin: 3px 0;"><strong>Payment Method:</strong>
+                                    {{ ucfirst(str_replace('_', ' ', $viewingSale->payment_method)) }}</p>
+                                <p style="margin: 3px 0;"><strong>Status:</strong>
+                                    @if ($viewingSale->payment_status === 'paid')
+                                        <span style="color: green; font-weight: bold;">✓ PAID</span>
+                                    @elseif ($viewingSale->payment_status === 'pending')
+                                        <span style="color: orange; font-weight: bold;">⏳ PENDING</span>
+                                    @else
+                                        <span style="color: blue; font-weight: bold;">⚠ PARTIAL</span>
+                                    @endif
+                                </p>
+                            </div>
+
+                            <div
+                                style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #999; font-size: 11px;">
+                                <p style="margin: 5px 0;">
+                                    {{ $settings->receipt_footer ?? 'Thank you for your purchase!' }}</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button class="btn btn-secondary" type="button" wire:click="closeViewReceipt">
+                                <i class="fas fa-times me-2"></i>Close
+                            </button>
+                            <button class="btn btn-info" type="button" onclick="printViewReceipt()">
+                                <i class="fas fa-print me-2"></i>Print
+                            </button>
+                            <button class="btn btn-success" type="button" onclick="downloadViewReceipt()">
+                                <i class="fas fa-download me-2"></i>Download PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-backdrop fade show"></div>
+        @endif
+
         @push('styles')
             <link href="{{ asset('vendors/choices/choices.min.css') }}" rel="stylesheet" />
-        @endpush
-        @push('js')
-            <!-- Choice.js -->
-            <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-            <script>
-                function printReceipt() {
-                    var receiptContent = document.getElementById('receipt').innerHTML;
-                    var originalContent = document.body.innerHTML;
+            <style>
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
 
-                    document.body.innerHTML = receiptContent; // Set body to only receipt content
-                    window.print(); // Print the page
-                    document.body.innerHTML = originalContent; // Restore original content
-                    window.location.reload(); // Reload to reinitialize the page
+                    #receipt,
+                    #receipt * {
+                        visibility: visible;
+                    }
+
+                    #receipt {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                    }
+
+                    .modal-header,
+                    .modal-footer {
+                        display: none !important;
+                    }
                 }
-            </script>
+            </style>
         @endpush
+        @once
+            @push('js')
+                <!-- Choice.js -->
+                <script src="{{ asset('vendors/choices/choices.min.js') }}"></script>
+                <!-- HTML2PDF for receipt download -->
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+            @endpush
+        @endonce
+
+        @script
+            <script>
+                window.printReceipt = function() {
+                    var receiptContent = document.getElementById('receipt');
+                    if (!receiptContent) return;
+
+                    var printWindow = window.open('', '', 'width=800,height=600');
+                    if (!printWindow) return;
+
+                    var htmlContent = '<!DOCTYPE html><html><head><title>Receipt</title><style>' +
+                        'body { font-family: "Courier New", monospace; font-size: 12px; margin: 10px; padding: 0; } ' +
+                        'table { width: 100%; border-collapse: collapse; } ' +
+                        'th, td { padding: 3px; border: none; } ' +
+                        '@media print { body { margin: 0; padding: 0; } }' +
+                        '</style></head><body>' + receiptContent.innerHTML + '</body></html>';
+
+                    printWindow.document.write(htmlContent);
+                    printWindow.document.close();
+                    printWindow.focus();
+
+                    setTimeout(function() {
+                        printWindow.print();
+                        printWindow.close();
+                    }, 250);
+                };
+
+                window.downloadReceipt = function() {
+                    const element = document.getElementById('receipt');
+                    if (!element || typeof html2pdf === 'undefined') return;
+
+                    const opt = {
+                        margin: 5,
+                        filename: 'receipt_sales.pdf',
+                        image: {
+                            type: 'jpeg',
+                            quality: 0.98
+                        },
+                        html2canvas: {
+                            scale: 2
+                        },
+                        jsPDF: {
+                            orientation: 'portrait',
+                            unit: 'mm',
+                            format: 'a4'
+                        }
+                    };
+
+                    html2pdf().set(opt).from(element).save();
+                };
+
+                window.printViewReceipt = function() {
+                    var receiptContent = document.getElementById('viewReceipt');
+                    if (!receiptContent) return;
+
+                    var printWindow = window.open('', '', 'width=800,height=600');
+                    if (!printWindow) return;
+
+                    var htmlContent = '<!DOCTYPE html><html><head><title>Receipt</title><style>' +
+                        'body { font-family: "Courier New", monospace; font-size: 12px; margin: 10px; padding: 0; } ' +
+                        'table { width: 100%; border-collapse: collapse; } ' +
+                        'th, td { padding: 3px; border: none; } ' +
+                        'img { max-width: 100%; height: auto; } ' +
+                        '@media print { body { margin: 0; padding: 0; } }' +
+                        '</style></head><body>' + receiptContent.innerHTML + '</body></html>';
+
+                    printWindow.document.write(htmlContent);
+                    printWindow.document.close();
+                    printWindow.focus();
+
+                    setTimeout(function() {
+                        printWindow.print();
+                        printWindow.close();
+                    }, 250);
+                };
+
+                window.downloadViewReceipt = function() {
+                    const element = document.getElementById('viewReceipt');
+                    if (!element || typeof html2pdf === 'undefined') return;
+
+                    const opt = {
+                        margin: 5,
+                        filename: 'receipt_sales.pdf',
+                        image: {
+                            type: 'jpeg',
+                            quality: 0.98
+                        },
+                        html2canvas: {
+                            scale: 2
+                        },
+                        jsPDF: {
+                            orientation: 'portrait',
+                            unit: 'mm',
+                            format: 'a4'
+                        }
+                    };
+
+                    html2pdf().set(opt).from(element).save();
+                };
+            </script>
+        @endscript
     </div>
