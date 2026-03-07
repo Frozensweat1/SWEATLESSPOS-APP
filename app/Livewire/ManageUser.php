@@ -9,14 +9,13 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
 use Spatie\Permission\Models\Role;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Layout('layouts.app')]
 class ManageUser extends Component
 {
     use WithPagination;
-    use LivewireAlert;
 
     public $searchTerm = '';  // For searching users
     public $roleFilter = '';  // For filtering users by role
@@ -38,16 +37,12 @@ class ManageUser extends Component
     public function Delete($id)
     {
         $this->selected_id = $id;
-        $this->alert('warning', 'Are you sure you want to delete?', [
-            'position' => 'center',
-            'timer' => 6000,
-            'toast' => false,
-            'showConfirmButton' => true,
-            'onConfirmed' => 'confirmedDeletion',
-            'showCancelButton' => true,
-            'timerProgressBar' => false,
-            'width' => '400',
-        ]);
+        LivewireAlert::title('Are you sure you want to delete?')
+            ->warning()
+            ->onConfirm('confirmedDeletion')
+            ->withConfirmButton('Yes, Delete')
+            ->withCancelButton('Cancel')
+            ->show();
     }
 
     public function confirmedDeletion()
@@ -66,9 +61,19 @@ class ManageUser extends Component
             ]);
 
             $user->delete();
-            $this->alert('success', 'Successfully Deleted ' . $user->name);
+            LivewireAlert::title('Deleted')
+                ->text('Successfully Deleted ' . $user->name)
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         } else {
-            $this->alert('error', 'Unable to delete supplier record.');
+            LivewireAlert::title('Error')
+                ->text('Unable to delete supplier record.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 

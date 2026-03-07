@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     protected $fillable = [
         'name',
         'barcode',
@@ -20,7 +21,8 @@ class Product extends Model
         'supplier_id',
         'manufacture_date',
         'expiry_date',
-        'image'
+        'image',
+        'store_id'
     ];
 
     // Example method to auto-generate SKU if not provided
@@ -34,6 +36,12 @@ class Product extends Model
     {
         return preg_match('/^[A-Z0-9\-]+$/', $sku);
     }
+    // A Product belongs to a Store
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);

@@ -7,13 +7,14 @@ use Livewire\WithPagination;
 use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\SaleDetail;
+use App\Traits\StoreScoped;
 use Livewire\Attributes\Layout;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 #[Layout('layouts.app')]
 class CustomerReport extends Component
 {
-    use WithPagination, LivewireAlert;
+    use WithPagination, StoreScoped;
 
     public $search = '';
     public $sortField = 'created_at'; // Default sort
@@ -21,6 +22,11 @@ class CustomerReport extends Component
     public $perPage = 10; // Number of items per page
 
     protected $paginationTheme = 'bootstrap';
+
+    public function __construct()
+    {
+        $this->initStoreId();
+    }
 
     // Sort direction toggle
     public function sortBy($field)
@@ -31,12 +37,13 @@ class CustomerReport extends Component
 
     public function render()
     {
-        $customers = Customer::with(['sales' => function ($query) {
-            $query->with(['saleDetails' => function ($detailQuery) {
-                $detailQuery->where('is_refunded', false); // Only include non-refunded items
+        $customers = Customer::where('store_id', $this->getStoreId())
+            ->with(['sales' => function ($query) {
+                $query->with(['saleDetails' => function ($detailQuery) {
+                    $detailQuery->where('is_refunded', false);
+                }])
+                    ->withSum('saleDetails as total_amount', 'subtotal');
             }])
-                ->withSum('saleDetails as total_amount', 'subtotal');
-        }])
             ->when($this->search, function ($query) {
                 $query->where('name', 'like', "%{$this->search}%");
             })

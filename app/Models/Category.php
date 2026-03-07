@@ -11,8 +11,15 @@ class Category extends Model
     protected $fillable = [
         'name',
         'description',
-        'category_photo_path'
+        'category_photo_path',
+        'store_id'
     ];
+
+    // A Category belongs to a Store
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
 
     public function products()
     {

@@ -11,13 +11,12 @@ use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 #[Layout('layouts.app')]
 class EditUser extends Component
 {
     use WithFileUploads;
-    use LivewireAlert;
     public $userId;
     public $name;
     public $email;
@@ -85,7 +84,12 @@ class EditUser extends Component
             'type' => 'info',
             'is_read' => false,
         ]);
-        $this->alert('success', 'Succesfully updated ' . $user->name);
+        LivewireAlert::title('Success')
+            ->text('Succesfully updated ' . $user->name)
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
     }
 
     public function render()

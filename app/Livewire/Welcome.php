@@ -9,8 +9,15 @@ class Welcome extends Component
 {
     public function render()
     {
-        // Fetch settings records
-        $settings = Setting::first();
+        // Fetch settings records or create default
+        $settings = Setting::first() ?? new Setting([
+            'site_name' => config('app.name', 'Sweatless POS'),
+            'currency' => 'USD',
+            'contact_phone' => '',
+            'contact_email' => '',
+            'address' => '',
+            'receipt_header' => 'In God We Trust!',
+        ]);
 
         return view('livewire.welcome', [
             'settings' => $settings,

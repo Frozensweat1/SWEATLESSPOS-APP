@@ -5,9 +5,10 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Sale;
 use App\Models\SaleDetail;
-use App\Models\Notification; // Import your Notification model
+use App\Models\Notification;
 use App\Models\Product;
 use App\Models\Refund;
+use App\Traits\StoreScoped;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -16,7 +17,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Pdf\Mpdf;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\WithFileUploads;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\Auth; // Add this
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +26,7 @@ class ManageSales extends Component
 {
     use WithFileUploads;
     use WithPagination;
-    use LivewireAlert;
+    use StoreScoped;
 
     public $selectedSales = [];
     public $selectAll = false;
@@ -39,11 +40,23 @@ class ManageSales extends Component
     public $pageTitle, $componentName;
     protected $paginationTheme = 'bootstrap';
     public $isRefundMode = false, $sdID, $sale_id, $product_id, $quantity, $subtotal, $reason;
+    public $viewingSaleId = null;
+    public $viewingSale = null;
+    public $viewingCustomer = null;
+    public $viewingSaleBarcode = null;
+    public $showViewReceipt = false;
+    public $settings;
     public function mount()
     {
+        $this->initStoreId();
         $this->pageTitle = 'Manage Sales';
         $this->componentName = 'Sales';
         $this->loadDateRange();
+        $this->settings = \App\Models\Setting::first() ?? new \App\Models\Setting([
+            'site_name' => config('app.name', 'Sweatless POS'),
+            'receipt_header' => 'In God We Trust!',
+            'receipt_footer' => 'Thank you for your purchase!',
+        ]);
     }
 
     public function openModal()
@@ -90,11 +103,12 @@ class ManageSales extends Component
                 'quantity' => $this->quantity,
                 'refund_amount' => $this->subtotal,
                 'reason' => $this->reason,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
+                'store_id' => $this->getStoreId()
             ]);
 
             // Increase stock quantity of the refunded product
-            $product = Product::find($this->product_id);
+            $product = Product::where('store_id', $this->getStoreId())->find($this->product_id);
             if ($product) {
                 $product->increment('stock_quantity', $this->quantity);
             }
@@ -113,11 +127,21 @@ class ManageSales extends Component
 
             // Reset the UI and show success message
             $this->closeModal();
-            $this->alert('success', 'Refund Processed Successfully');
+            LivewireAlert::title('Success')
+                ->text('Refund Processed Successfully')
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         } catch (\Exception $e) {
             // Rollback the transaction if any error occurs
             DB::rollBack();
-            $this->alert('error', 'An error occurred while processing the refund. Please try again.');
+            LivewireAlert::title('Error')
+                ->text('An error occurred while processing the refund. Please try again.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 
@@ -164,9 +188,9 @@ class ManageSales extends Component
 
     public function getSalesProperty()
     {
-        $query = Sale::query()
+        $query = Sale::where('store_id', $this->getStoreId())
             ->with(['customer', 'saleDetails' => function ($query) {
-                $query->where('is_refunded', false); // Only include saleDetails where is_refunded is false
+                $query->where('is_refunded', false);
             }, 'saleDetails.product'])
             ->when($this->startDate && $this->endDate, function ($q) {
                 $q->whereBetween('created_at', [$this->startDate, $this->endDate]);
@@ -240,15 +264,12 @@ class ManageSales extends Component
 
     public function bulkDelete()
     {
-        $this->alert('warning', 'Are you sure you want to delete?', [
-            'position' => 'center',
-            'timer' => 6000,
-            'toast' => false,
-            'showConfirmButton' => true,
-            'onConfirmed' => 'confirmedDeletion',
-            'showCancelButton' => true,
-            'width' => '400',
-        ]);
+        LivewireAlert::title('Are you sure you want to delete?')
+            ->warning()
+            ->onConfirm('confirmedDeletion')
+            ->withConfirmButton('Yes, Delete')
+            ->withCancelButton('Cancel')
+            ->show();
     }
     public function confirmedDeletion()
     {
@@ -256,8 +277,11 @@ class ManageSales extends Component
         DB::beginTransaction();
 
         try {
-            // Fetch the selected sales and their details
-            $sales = Sale::with('saleDetails')->whereIn('id', $this->selectedSales)->get();
+            // Fetch the selected sales and their details from the store
+            $sales = Sale::where('store_id', $this->getStoreId())
+                ->with('saleDetails')
+                ->whereIn('id', $this->selectedSales)
+                ->get();
 
             // Delete sale details for each selected sale
             foreach ($sales as $sale) {
@@ -267,7 +291,7 @@ class ManageSales extends Component
             }
 
             // Now delete the sales themselves
-            Sale::whereIn('id', $this->selectedSales)->delete();
+            Sale::where('store_id', $this->getStoreId())->whereIn('id', $this->selectedSales)->delete();
 
             // Log notification for deletion
             $this->logNotification('Delete Sales', 'Selected sales and their details deleted successfully.', 'warning');
@@ -275,12 +299,22 @@ class ManageSales extends Component
             // Commit the transaction
             DB::commit();
 
-            $this->alert('success', 'Selected sales and their details deleted successfully');
+            LivewireAlert::title('Success')
+                ->text('Selected sales and their details deleted successfully')
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
             $this->selectedSales = [];
         } catch (\Exception $e) {
             // Rollback the transaction on error
             DB::rollBack();
-            $this->alert('error', 'An error occurred while deleting selected sales. Please try again.');
+            LivewireAlert::title('Error')
+                ->text('An error occurred while deleting selected sales. Please try again.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 
@@ -301,6 +335,33 @@ class ManageSales extends Component
     public function resetUI()
     {
         $this->reset(['sale_id', 'product_id', 'quantity', 'subtotal', 'sdID', 'reason']);
+    }
+
+    public function viewReceipt($saleId)
+    {
+        $this->viewingSaleId = $saleId;
+        $this->viewingSale = Sale::where('store_id', $this->getStoreId())
+            ->with(['customer', 'saleDetails.product'])
+            ->find($saleId);
+
+        if ($this->viewingSale) {
+            $this->viewingCustomer = $this->viewingSale->customer;
+
+            // Generate barcode for viewing sale
+            $barcodeGenerator = new \Picqer\Barcode\BarcodeGeneratorPNG();
+            $this->viewingSaleBarcode = base64_encode($barcodeGenerator->getBarcode($this->viewingSale->id, $barcodeGenerator::TYPE_CODE_128));
+
+            $this->showViewReceipt = true;
+        }
+    }
+
+    public function closeViewReceipt()
+    {
+        $this->showViewReceipt = false;
+        $this->viewingSaleId = null;
+        $this->viewingSale = null;
+        $this->viewingCustomer = null;
+        $this->viewingSaleBarcode = null;
     }
     public function render()
     {

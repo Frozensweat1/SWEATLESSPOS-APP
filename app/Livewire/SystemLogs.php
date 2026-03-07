@@ -4,7 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use App\Models\Log; // Assuming the model is named SystemLog
 use Livewire\WithFileUploads;
 use Illuminate\Support\Carbon;
@@ -14,7 +14,7 @@ use Livewire\Attributes\Layout;
 #[Layout('layouts.app')]
 class SystemLogs extends Component
 {
-    use WithPagination, LivewireAlert, WithFileUploads;
+    use WithPagination, WithFileUploads;
 
     public $search = '';
     public $dateFrom;
@@ -32,11 +32,12 @@ class SystemLogs extends Component
 
     public function deleteSelected()
     {
-        $this->alert('warning', 'Are you sure you want to delete the selected logs?', [
-            'showCancelButton' => true,
-            'confirmButtonText' => 'Yes, delete',
-            'onConfirmed' => 'bulkDelete'
-        ]);
+        LivewireAlert::title('Are you sure you want to delete the selected logs?')
+            ->warning()
+            ->onConfirm('bulkDelete')
+            ->withConfirmButton('Yes, Delete')
+            ->withCancelButton('Cancel')
+            ->show();
     }
 
     public function bulkDelete()
@@ -44,7 +45,12 @@ class SystemLogs extends Component
         Log::whereIn('id', $this->selectedLogs)->delete();
         $this->selectedLogs = [];
         $this->selectAll = false;
-        $this->alert('success', 'Selected logs deleted successfully.');
+        LivewireAlert::title('Success')
+            ->text('Selected logs deleted successfully.')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
     }
 
     public function export()

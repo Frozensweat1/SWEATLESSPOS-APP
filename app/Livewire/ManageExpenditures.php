@@ -3,12 +3,13 @@
 namespace App\Livewire;
 
 use App\Models\Expenditure;
-use App\Models\Notification; // Import the Notification model
+use App\Models\Notification;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\WithFileUploads;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use App\Traits\StoreScoped;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -17,7 +18,7 @@ class ManageExpenditures extends Component
 {
     use WithFileUploads;
     use WithPagination;
-    use LivewireAlert;
+    use StoreScoped;
 
     protected $paginationTheme = 'bootstrap'; // Using Bootstrap for pagination UI
 
@@ -46,13 +47,14 @@ class ManageExpenditures extends Component
 
     public function mount()
     {
+        $this->initStoreId();
         $this->pageTitle = 'Manage Expenses';
         $this->componentName = 'Expenditure';
     }
 
     public function render()
     {
-        $query = Expenditure::where('user_id', Auth::id())
+        $query = Expenditure::where('store_id', $this->getStoreId())
             ->where(function ($q) {
                 if ($this->searchengine) {
                     $q->where('description', 'like', '%' . $this->searchengine . '%')
@@ -68,7 +70,7 @@ class ManageExpenditures extends Component
 
         return view('livewire.manage-expenditures', [
             'expenditures' => $query->paginate(10),
-            'categories' => Expenditure::select('category')->distinct()->pluck('category')
+            'categories' => Expenditure::where('store_id', $this->getStoreId())->select('category')->distinct()->pluck('category')
         ]);
     }
 
@@ -107,7 +109,7 @@ class ManageExpenditures extends Component
     public function Edit($id)
     {
         $this->resetUI();
-        $record = Expenditure::find($id, ['id', 'description', 'amount', 'category', 'expenditure_date', 'supplier_id', 'notes']);
+        $record = Expenditure::where('store_id', $this->getStoreId())->find($id, ['id', 'description', 'amount', 'category', 'expenditure_date', 'supplier_id', 'notes']);
         $this->selected_id = $record->id;
         $this->description = $record->description;
         $this->amount = $record->amount;
@@ -131,6 +133,7 @@ class ManageExpenditures extends Component
             'user_id' => Auth::id(),
             'supplier_id' => $this->supplier_id,
             'notes' => $this->notes,
+            'store_id' => $this->getStoreId(),
         ]);
 
         // Log the notification
@@ -140,7 +143,12 @@ class ManageExpenditures extends Component
         $this->reset(['description', 'amount', 'category', 'expenditure_date', 'supplier_id', 'notes']);
 
         $this->dispatch('expenditure-added', 'Expenditure Added!');
-        $this->alert('success', 'Expenditure Added Successfully!');
+        LivewireAlert::title('Success')
+            ->text('Expenditure Added Successfully!')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
     }
 
     public function Update()
@@ -148,7 +156,7 @@ class ManageExpenditures extends Component
         $this->validate($this->rules());
 
         if ($this->selected_id) {
-            $expenditure = Expenditure::find($this->selected_id);
+            $expenditure = Expenditure::where('store_id', $this->getStoreId())->find($this->selected_id);
             $expenditure->update([
                 'description' => $this->description,
                 'amount' => $this->amount,
@@ -163,37 +171,48 @@ class ManageExpenditures extends Component
 
             $this->resetUI();
             $this->dispatch('expenditure-updated', 'Expenditure Record Updated!');
-            $this->alert('success', 'Expenditure Record Updated!');
+            LivewireAlert::title('Success')
+                ->text('Expenditure Record Updated!')
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 
     public function Delete($id)
     {
         $this->selected_id = $id;
-        $this->alert('warning', 'Are you sure you want to delete?', [
-            'position' => 'center',
-            'timer' => 6000,
-            'toast' => false,
-            'showConfirmButton' => true,
-            'onConfirmed' => 'confirmedDeletion',
-            'showCancelButton' => true,
-            'timerProgressBar' => false,
-            'width' => '400',
-        ]);
+        LivewireAlert::title('Are you sure you want to delete?')
+            ->warning()
+            ->onConfirm('confirmedDeletion')
+            ->withConfirmButton('Yes, Delete')
+            ->withCancelButton('Cancel')
+            ->show();
     }
 
     public function confirmedDeletion()
     {
-        $expense = Expenditure::find($this->selected_id);
+        $expense = Expenditure::where('store_id', $this->getStoreId())->find($this->selected_id);
         if ($expense) {
             $expense->delete();
 
             // Log the notification
             $this->logNotification('Expenditure Deleted', 'An expenditure record was deleted', 'warning');
 
-            $this->alert('success', 'Successfully Deleted Expenditure record');
+            LivewireAlert::title('Deleted')
+                ->text('Successfully Deleted Expenditure record')
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         } else {
-            $this->alert('error', 'Unable to delete Expenditure record.');
+            LivewireAlert::title('Error')
+                ->text('Unable to delete Expenditure record.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 

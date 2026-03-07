@@ -32,7 +32,7 @@
 
         <!-- Results Summary -->
         <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card bg-success text-white">
                     <div class="card-body">
                         <h5 class="card-title">Total Sales</h5>
@@ -40,7 +40,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card bg-danger text-white">
                     <div class="card-body">
                         <h5 class="card-title">Total Expenditures</h5>
@@ -48,6 +48,14 @@
                     </div>
                 </div>
             </div>
+             <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Inventory Value</h5>
+                    <p class="card-text">GH₵ {{ number_format($totalInventoryValue, 2) }}</p>
+                </div>
+            </div>
+        </div>
         </div>
 
         <!-- Sales and Expenditures Table -->

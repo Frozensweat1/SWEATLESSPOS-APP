@@ -1,4 +1,4 @@
-<nav class="navbar navbar-light navbar-glass navbar-top navbar-expand">
+<nav class="navbar navbar-light navbar-glass navbar-top navbar-expand py-2 py-xl-3 px-2 px-sm-3 px-md-4">
     <button class="btn navbar-toggler-humburger-icon navbar-toggler me-1 me-sm-3" type="button" data-bs-toggle="collapse"
         data-bs-target="#navbarVerticalCollapse" aria-controls="navbarVerticalCollapse" aria-expanded="false"
         aria-label="Toggle Navigation">
@@ -8,13 +8,20 @@
     </button>
     <a class="navbar-brand me-1 me-sm-3" href="{{ route('dashboard') }}">
         <div class="d-flex align-items-center">
-            <img class="me-2" src="../assets/img/icons/spot-illustrations/falcon.png" alt="" width="40" />
-            <span class="font-sans-serif">sweatless</span>
+            <img class="me-2" src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}"
+                alt="{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}"
+                style="height: 40px; width: auto; object-fit: contain;" />
+            <div class="d-flex flex-column justify-content-center">
+                <span class="font-sans-serif fw-bold text-dark" style="font-size: 15px; line-height: 1.2;">
+                    {{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}
+                </span>
+                <small class="text-muted" style="font-size: 11px;">Management System</small>
+            </div>
         </div>
     </a>
-    <ul class="navbar-nav navbar-nav-icons ms-auto flex-row align-items-center">
+    <ul class="flex-row navbar-nav navbar-nav-icons ms-auto align-items-center">
         <li class="nav-item">
-            <div class="theme-control-toggle fa-icon-wait px-2">
+            <div class="px-2 theme-control-toggle fa-icon-wait">
                 <input class="form-check-input ms-0 theme-control-toggle-input" id="themeControlToggle" type="checkbox"
                     data-theme-control="theme" value="dark" />
                 <label class="mb-0 theme-control-toggle-label theme-control-toggle-light" for="themeControlToggle"
@@ -27,7 +34,7 @@
         </li>
 
         <li class="nav-item dropdown">
-            <a class="nav-link notification-indicator notification-indicator-primary px-0 fa-icon-wait"
+            <a class="px-0 nav-link notification-indicator notification-indicator-primary fa-icon-wait"
                 id="navbarDropdownNotification" href="#" role="button" data-bs-toggle="dropdown"
                 aria-haspopup="true" aria-expanded="false">
                 <span class="fas fa-bell" data-fa-transform="shrink-6" style="font-size: 33px;"></span>
@@ -48,7 +55,7 @@
                             alt="{{ auth()->user()->name }}" />
                     @else
                         <!-- Generate initials if no profile image -->
-                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-dark text-white fs-2"
+                        <div class="text-white rounded-circle d-flex align-items-center justify-content-center bg-dark fs-2"
                             style="width: 2rem; height: 2rem;">
                             {{ strtoupper(collect(explode(' ', auth()->user()->name))->take(2)->map(fn($name) => $name[0])->join('')) }}
                         </div>
@@ -56,8 +63,8 @@
                 </div>
 
             </a>
-            <div class="dropdown-menu dropdown-menu-end py-0" aria-labelledby="navbarDropdownUser">
-                <div class="bg-white dark__bg-1000 rounded-2 py-2">
+            <div class="py-0 dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
+                <div class="py-2 bg-white dark__bg-1000 rounded-2">
 
                     <a class="dropdown-item" href="{{ route('user.profile') }}">
                         {{ explode(' ', Auth::user()->name)[0] }}

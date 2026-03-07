@@ -11,13 +11,12 @@ use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 #[Layout('layouts.app')] // This is how layouts are defined in Livewire 3
 class AddUser extends Component
 {
     use WithFileUploads;
-    use LivewireAlert;
     public $name;
     public $email;
     public $password;
@@ -85,9 +84,19 @@ class AddUser extends Component
             $this->reset(['name', 'email', 'password', 'role', 'image']);
 
             // Show a success message
-            $this->alert('success', 'Successfully created ' . $user->name);
+            LivewireAlert::title('Success')
+                ->text('Successfully created ' . $user->name)
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         } catch (\Exception $e) {
-            $this->alert('error', 'Failed to create user: ' . $e->getMessage());
+            LivewireAlert::title('Error')
+                ->text('Failed to create user: ' . $e->getMessage())
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 

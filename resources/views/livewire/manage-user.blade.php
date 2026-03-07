@@ -73,7 +73,7 @@
                             @else
                                 <a href="{{ route('edit.user', $user->id) }}">
                                     <img class="img-thumbnail img-fluid rounded-circle mb-3 shadow-sm"
-                                        src="{{ asset('assets/img/team/avatar.png') }}" alt="Profile Photo"
+                                        src="{{ asset('assets/img/avatar.png') }}" alt="Profile Photo"
                                         width="100" />
                                 </a>
                             @endif

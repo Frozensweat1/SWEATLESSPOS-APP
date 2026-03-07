@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2c14f25fa4da193e55e108d9b51a05fe",
+    "content-hash": "9b9a06b7b3d6d96ee5b610a364ed3c8d",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1156,36 +1156,38 @@
         },
         {
             "name": "jantinnerezo/livewire-alert",
-            "version": "v3.0.2",
+            "version": "v4.0.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jantinnerezo/livewire-alert.git",
-                "reference": "24281639258daf80fe0a585f55b7490a88fd68ef"
+                "reference": "564e70b99fcc448ae361f3b833c8b2bc2979c3a5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jantinnerezo/livewire-alert/zipball/24281639258daf80fe0a585f55b7490a88fd68ef",
-                "reference": "24281639258daf80fe0a585f55b7490a88fd68ef",
+                "url": "https://api.github.com/repos/jantinnerezo/livewire-alert/zipball/564e70b99fcc448ae361f3b833c8b2bc2979c3a5",
+                "reference": "564e70b99fcc448ae361f3b833c8b2bc2979c3a5",
                 "shasum": ""
             },
             "require": {
-                "illuminate/support": "^5.5 || ^6.0 || ^7.0 || ^8.0 || ^9.0 || ^10.0|^11.0",
-                "livewire/livewire": "^3.0",
-                "php": "^8.1|^8.2"
+                "illuminate/support": "^10.0|^11.0|^12.0",
+                "livewire/livewire": "^3.0|^4.0",
+                "php": "^8.1"
             },
             "require-dev": {
-                "orchestra/testbench": "^6.15|^7.0|^8.0|^9.0",
-                "phpunit/phpunit": "^9.5|^10.0"
+                "friendsofphp/php-cs-fixer": "^3.70",
+                "orchestra/testbench": "^8.0|^9.0|^10.0",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^9.5|^10.0|^11.5.3"
             },
             "type": "library",
             "extra": {
                 "laravel": {
+                    "aliases": {
+                        "LivewireAlert": "Jantinnerezo\\LivewireAlert\\LivewireAlert"
+                    },
                     "providers": [
                         "Jantinnerezo\\LivewireAlert\\LivewireAlertServiceProvider"
-                    ],
-                    "aliases": {
-                        "LivewireAlert": "Jantinnerezo\\LivewireAlert\\LivewireAlertFacade"
-                    }
+                    ]
                 }
             },
             "autoload": {
@@ -1212,9 +1214,9 @@
             ],
             "support": {
                 "issues": "https://github.com/jantinnerezo/livewire-alert/issues",
-                "source": "https://github.com/jantinnerezo/livewire-alert/tree/v3.0.2"
+                "source": "https://github.com/jantinnerezo/livewire-alert/tree/v4.0.8"
             },
-            "time": "2024-03-10T10:47:39+00:00"
+            "time": "2026-01-28T06:04:05+00:00"
         },
         {
             "name": "laravel/fortify",
@@ -9015,12 +9017,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.6.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
 }

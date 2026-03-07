@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Traits\StoreScoped;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Facades\Auth;
@@ -14,14 +15,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
 use Spatie\Permission\Models\Role;
 use Livewire\Attributes\Layout;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
 class ManageReturns extends Component
 {
-    use WithPagination;
-    use LivewireAlert;
+    use WithPagination, StoreScoped;
 
     public $products;
     public $users;
@@ -36,29 +36,37 @@ class ManageReturns extends Component
 
     public function mount()
     {
-        $this->products = Product::all();
+        $this->initStoreId();
+        $this->products = Product::where('store_id', $this->getStoreId())->get();
         $this->users = User::role(['admin', 'super-admin'])->get();
     }
     public function confirmBulkDelete()
     {
         if (count($this->selectedRefunds) > 0) {
-            $this->alert('warning', 'Are you sure?', [
-                'text' => 'You are about to delete selected refunds.',
-                'showConfirmButton' => true,
-                'confirmButtonText' => 'Yes, Delete',
-                'onConfirmed' => 'bulkDeleteRefunds',
-                'showCancelButton' => true,
-                'cancelButtonText' => 'Cancel',
-            ]);
+            LivewireAlert::title('Are you sure?')
+                ->html('You are about to delete selected refunds.')
+                ->warning()
+                ->onConfirm('bulkDeleteRefunds')
+                ->withConfirmButton('Yes, Delete')
+                ->withCancelButton('Cancel')
+                ->show();
         } else {
-            $this->alert('warning', 'No refunds selected.');
+            LivewireAlert::warning('No refunds selected.')
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
     public function bulkDeleteProducts()
     {
         Product::whereIn('id', $this->selectedRefunds)->delete();
         $this->selectedRefunds = []; // Clear selected products
-        $this->alert('success', 'Selected refunds deleted successfully.');
+        LivewireAlert::title('Success')
+            ->text('Selected refunds deleted successfully.')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
     }
 
     public function updatedSelectAll($value)
@@ -72,7 +80,7 @@ class ManageReturns extends Component
     }
     public function getRefundsProperty()
     {
-        $query = Refund::query()->with(['product', 'user'])
+        $query = Refund::where('store_id', $this->getStoreId())->with(['product', 'user'])
             ->when($this->filters['product_id'], function ($q) {
                 $q->where('product_id', $this->filters['product_id']);
             })

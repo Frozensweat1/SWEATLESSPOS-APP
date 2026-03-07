@@ -3,7 +3,7 @@
       <div class="container">
           <a class="navbar-brand" href="{{ route('home') }}">
               <span
-                  class="text-dark dark__text-white">{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}</span>
+                  class="text-white dark__text-white">{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}</span>
           </a>
           <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbarStandard"
               aria-controls="navbarStandard" aria-expanded="false" aria-label="Toggle navigation">
@@ -16,12 +16,12 @@
                   <li class="nav-item">
                       @if (Auth::check())
                           <!-- Display user's name if authenticated -->
-                          <a class="nav-link text-dark" href="{{ route('user.profile') }}" role="button">
+                          <a class="nav-link text-white" href="{{ route('user.profile') }}" role="button">
                               {{ Auth::user()->name }}
                           </a>
                       @else
                           <!-- Display "Login" link if not authenticated -->
-                          <a class="nav-link text-dark" href="{{ route('login') }}" role="button">Login</a>
+                          <a class="nav-link text-white" href="{{ route('login') }}" role="button">Login</a>
                       @endif
                   </li>
 

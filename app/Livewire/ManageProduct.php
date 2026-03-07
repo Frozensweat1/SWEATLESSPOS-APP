@@ -11,7 +11,8 @@ use Livewire\WithFileUploads;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Notification;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use App\Traits\StoreScoped;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\Auth; // Add this
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -24,7 +25,9 @@ class ManageProduct extends Component
 {
     use WithFileUploads;
     use WithPagination;
-    use LivewireAlert;
+    use StoreScoped;
+
+    protected $paginationTheme = 'bootstrap'; // Using Bootstrap for pagination UI
 
     public $currentImage, $searchengine, $selected_id, $pageTitle, $componentName;
     public $name, $barcode, $sku, $description, $price, $cost_price, $stock_quantity;
@@ -45,40 +48,47 @@ class ManageProduct extends Component
             'stock_quantity' => 'required|numeric',
             'category_id' => 'required|numeric|not_in:Elegir',
             'supplier_id' => 'required|numeric|not_in:Elegir',
-            'manufacture_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date',
+            'manufacture_date' => 'required|date',
+            'expiry_date' => 'required|date',
             'image' => 'nullable|image|max:5024', // max 5MB
         ];
     }
 
     public function mount()
     {
+        $this->initStoreId();
         $this->pageTitle = 'Data';
         $this->componentName = 'Products';
-        $this->categories = Category::all();
-        $this->suppliers = Supplier::all();
+        $this->categories = Category::where('store_id', $this->getStoreId())->get();
+        $this->suppliers = Supplier::where('store_id', $this->getStoreId())->get();
     }
     public function confirmBulkDelete()
     {
         if (count($this->selectedProducts) > 0) {
-            $this->alert('warning', 'Are you sure?', [
-                'text' => 'You are about to delete selected products.',
-                'showConfirmButton' => true,
-                'confirmButtonText' => 'Yes, Delete',
-                'onConfirmed' => 'bulkDeleteProducts',
-                'showCancelButton' => true,
-                'cancelButtonText' => 'Cancel',
-            ]);
+            LivewireAlert::title('Are you sure?')
+                ->html('You are about to delete selected products.')
+                ->warning()
+                ->onConfirm('bulkDeleteProducts')
+                ->withConfirmButton('Yes, Delete')
+                ->withCancelButton('Cancel')
+                ->show();
         } else {
-            $this->alert('warning', 'No products selected.');
+            LivewireAlert::warning('No products selected.')
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
     public function bulkDeleteProducts()
     {
-        Product::whereIn('id', $this->selectedProducts)->delete();
-        $this->selectedProducts = []; // Clear selected products
-        $this->alert('success', 'Selected products deleted successfully.');
-        $this->emit('refreshProductList'); // Optional: Refresh list after deletion
+        Product::where('store_id', $this->getStoreId())->whereIn('id', $this->selectedProducts)->delete();
+        $this->selectedProducts = [];
+        LivewireAlert::title('Success')
+            ->text('Selected products deleted successfully.')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
     }
 
     public function updatedSelectAll($value)
@@ -92,7 +102,8 @@ class ManageProduct extends Component
     }
     public function getProductsProperty()
     {
-        $query = Product::query()
+        $query = Product::where('store_id', $this->getStoreId())
+            ->withoutTrashed()
             ->with(['category', 'supplier'])
             ->when($this->searchengine, function ($query) {
                 $query->where(function ($q) {
@@ -122,7 +133,7 @@ class ManageProduct extends Component
             ['Name', 'Barcode', 'SKU', 'Description', 'Price', 'Cost Price', 'Stock Quantity', 'Category', 'Supplier', 'Manufacture Date', 'Expiry Date']
         ], null, 'A1');
 
-        $products = Product::with(['category', 'supplier'])->get();
+        $products = Product::where('store_id', $this->getStoreId())->withoutTrashed()->with(['category', 'supplier'])->get();
         foreach ($products as $index => $product) {
             $sheet->fromArray([
                 $product->name,
@@ -180,22 +191,24 @@ class ManageProduct extends Component
 
     public function Edit($id)
     {
+        $this->resetUI();
         $this->isEditMode = true;
-        $record = Product::find($id, [
-            'id',
-            'name',
-            'barcode',
-            'sku',
-            'description',
-            'price',
-            'cost_price',
-            'stock_quantity',
-            'category_id',
-            'supplier_id',
-            'manufacture_date',
-            'expiry_date',
-            'image'
-        ]);
+        $record = Product::where('store_id', $this->getStoreId())
+            ->find($id, [
+                'id',
+                'name',
+                'barcode',
+                'sku',
+                'description',
+                'price',
+                'cost_price',
+                'stock_quantity',
+                'category_id',
+                'supplier_id',
+                'manufacture_date',
+                'expiry_date',
+                'image'
+            ]);
         $this->name = $record->name;
         $this->barcode = $record->barcode;
         $this->sku = $record->sku;
@@ -230,6 +243,7 @@ class ManageProduct extends Component
             'supplier_id' => $this->supplier_id,
             'manufacture_date' => $this->manufacture_date,
             'expiry_date' => $this->expiry_date,
+            'store_id' => $this->getStoreId(),
         ]);
         // Handle image upload, if provided
         if ($this->image) {
@@ -242,7 +256,12 @@ class ManageProduct extends Component
         // Log Notification
         $this->logNotification('Product Created', "Product '{$product->name}' created.");
         $this->resetUI();
-        $this->alert('success', 'Product Created Successfully');
+        LivewireAlert::title('Success')
+            ->text('Product Created Successfully')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
     }
 
     public function Update()
@@ -250,7 +269,7 @@ class ManageProduct extends Component
         $this->validate($this->rules());
 
         if ($this->selected_id) {
-            $product = Product::find($this->selected_id);
+            $product = Product::where('store_id', $this->getStoreId())->find($this->selected_id);
             $data = [
                 'name' => $this->name,
                 'barcode' => $this->barcode,
@@ -271,34 +290,45 @@ class ManageProduct extends Component
             // Log Notification
             $this->logNotification('Product Updated', "Product '{$product->name}' updated.");
             $this->resetUI();
-            $this->alert('success', message: 'Product Updated Successfully');
+            LivewireAlert::title('Success')
+                ->text('Product Updated Successfully')
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
     public function Delete($id)
     {
         $this->selected_id = $id;
-        $this->alert('warning', 'Are you sure you want to delete?', [
-            'position' => 'center',
-            'timer' => 3000,
-            'toast' => false,
-            'showConfirmButton' => true,
-            'onConfirmed' => 'confirmedDeletion',
-            'showCancelButton' => true,
-            'timerProgressBar' => false,
-            'width' => '400',
-        ]);
+        LivewireAlert::title('Are you sure you want to delete?')
+            ->warning()
+            ->onConfirm('confirmedDeletion')
+            ->withConfirmButton('Yes, Delete')
+            ->withCancelButton('Cancel')
+            ->show();
     }
 
     public function confirmedDeletion()
     {
-        $product = Product::find($this->selected_id);
+        $product = Product::where('store_id', $this->getStoreId())->find($this->selected_id);
         if ($product) {
             $product->delete();
-            $this->alert('success', 'The product has been deleted.');
+            LivewireAlert::title('Deleted')
+                ->text('The product has been deleted.')
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
             // Log Notification
             $this->logNotification('Product Deleted', "Product '{$product->name}' deleted.");
         } else {
-            $this->alert('error', 'Sorry, Something Went Wrong.');
+            LivewireAlert::title('Error')
+                ->text('Sorry, Something Went Wrong.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 

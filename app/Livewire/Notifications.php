@@ -8,7 +8,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -19,7 +19,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Pdf\Mpdf;
 class Notifications extends Component
 {
     use WithPagination;
-    use LivewireAlert;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -62,38 +61,41 @@ class Notifications extends Component
     public function confirmBulkDelete()
     {
         if (count($this->selectedNotifications) > 0) {
-            $this->alert('warning', 'Are you sure?', [
-                'text' => 'You are about to delete selected notifications.',
-                'showConfirmButton' => true,
-                'confirmButtonText' => 'Yes, Delete',
-                'onConfirmed' => 'bulkDeleteNotifications',
-                'showCancelButton' => true,
-                'cancelButtonText' => 'Cancel',
-            ]);
+            LivewireAlert::title('Are you sure?')
+                ->html('You are about to delete selected notifications.')
+                ->warning()
+                ->onConfirm('bulkDeleteNotifications')
+                ->withConfirmButton('Yes, Delete')
+                ->withCancelButton('Cancel')
+                ->show();
         } else {
-            $this->alert('warning', 'No notifications selected.');
+            LivewireAlert::warning('No notifications selected.')
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
     public function bulkDeleteNotifications()
     {
         Notification::whereIn('id', $this->selectedNotifications)->delete();
-        $this->alert('success', 'Selected notifications deleted successfully');
+        LivewireAlert::title('Success')
+            ->text('Selected notifications deleted successfully')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
         $this->selectedNotifications = [];
     }
 
     public function delete($id)
     {
         $this->selected_id = $id;
-        $this->alert('warning', 'Are you sure you want to delete?', [
-            'position' => 'center',
-            'timer' => 6000,
-            'toast' => false,
-            'showConfirmButton' => true,
-            'onConfirmed' => 'confirmedDeletion',
-            'showCancelButton' => true,
-            'timerProgressBar' => false,
-            'width' => '400',
-        ]);
+        LivewireAlert::title('Are you sure you want to delete?')
+            ->warning()
+            ->onConfirm('confirmedDeletion')
+            ->withConfirmButton('Yes, Delete')
+            ->withCancelButton('Cancel')
+            ->show();
     }
 
     public function confirmedDeletion()
@@ -101,9 +103,19 @@ class Notifications extends Component
         $notification = Notification::find($this->selected_id);
         if ($notification) {
             $notification->delete();
-            $this->alert('success', 'Successfully Deleted ' . $notification->title);
+            LivewireAlert::title('Deleted')
+                ->text('Successfully Deleted ' . $notification->title)
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         } else {
-            $this->alert('error', 'Unable to delete notification record.');
+            LivewireAlert::title('Error')
+                ->text('Unable to delete notification record.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
     protected $listeners = [

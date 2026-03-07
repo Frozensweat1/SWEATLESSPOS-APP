@@ -6,16 +6,18 @@ use Livewire\Component;
 use App\Models\Sale;
 use App\Models\SaleDetail;
 use App\Models\Expenditure;
+use App\Models\Product;
 use App\Models\User;
+use App\Traits\StoreScoped;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 #[Layout('layouts.app')]
 class FinancialReport extends Component
 {
-    use WithPagination;
+    use WithPagination, StoreScoped;
 
     public $startDate;
     public $endDate;
@@ -26,6 +28,7 @@ class FinancialReport extends Component
 
     public function mount()
     {
+        $this->initStoreId();
         $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
     }
@@ -33,11 +36,12 @@ class FinancialReport extends Component
     public function render()
     {
         // Query sales with non-refunded SaleDetails only
-        $salesQuery = Sale::with(['saleDetails' => function ($query) {
-            $query->where('is_refunded', false);
-        }]);
+        $salesQuery = Sale::where('store_id', $this->getStoreId())
+            ->with(['saleDetails' => function ($query) {
+                $query->where('is_refunded', false);
+            }]);
 
-        $expendituresQuery = Expenditure::query();
+        $expendituresQuery = Expenditure::where('store_id', $this->getStoreId());
 
         if ($this->startDate && $this->endDate) {
             $salesQuery->whereBetween('created_at', [$this->startDate, $this->endDate]);
@@ -61,6 +65,11 @@ class FinancialReport extends Component
         $sales = $salesQuery->paginate($this->perPage);
         $expenditures = $expendituresQuery->paginate($this->perPage);
 
+        // Calculate total inventory value: Sum of (stock_quantity * price) for all products in this store.
+        $totalInventoryValue = Product::where('store_id', $this->getStoreId())
+            ->select(DB::raw('SUM(stock_quantity * price) as total_inventory_value'))
+            ->value('total_inventory_value');
+
         // Fetch users with specific roles using Spatie
         $users = User::role(['super-admin', 'admin', 'cashier'])->get();
 
@@ -69,6 +78,7 @@ class FinancialReport extends Component
             'expenditures' => $expenditures,
             'totalSales' => $totalSales,
             'totalExpenditures' => $totalExpenditures,
+            'totalInventoryValue' => $totalInventoryValue,
             'users' => $users,
         ]);
     }

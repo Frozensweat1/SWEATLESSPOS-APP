@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Sale;
 use App\Models\SaleDetail;
+use App\Traits\StoreScoped;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -13,12 +14,11 @@ use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Writer\Pdf\Mpdf;
 use Livewire\Attributes\Layout;
 use Livewire\WithFileUploads;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 #[Layout('layouts.app')]
 class SaleReport extends Component
 {
-    use WithPagination;
+    use WithPagination, StoreScoped;
     protected $paginationTheme = 'bootstrap';
     public $startDate;
     public $endDate;
@@ -28,15 +28,17 @@ class SaleReport extends Component
 
     public function mount()
     {
+        $this->initStoreId();
         $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->endDate = Carbon::now()->format('Y-m-d');
     }
 
     public function getSalesProperty()
     {
-        $query = Sale::with(['saleDetails' => function ($query) {
-            $query->where('is_refunded', false); // Only include saleDetails where is_refunded is false
-        }, 'saleDetails.product', 'customer', 'user'])
+        $query = Sale::where('store_id', $this->getStoreId())
+            ->with(['saleDetails' => function ($query) {
+                $query->where('is_refunded', false);
+            }, 'saleDetails.product', 'customer', 'user'])
             ->whereBetween('created_at', [$this->startDate, $this->endDate]);
 
         if ($this->paymentMethod) {

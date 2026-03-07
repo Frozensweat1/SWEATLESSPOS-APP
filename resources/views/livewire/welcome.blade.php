@@ -28,9 +28,9 @@
                 </div>
                 <div class="col-lg-4 pb-7 pb-xl-9 justify-content-end">
                     <a class="rounded" href="{{ route('dashboard') }}">
-                        @if ($settings->background_img1)
-                            <img src="{{ $settings->BackgroundImg1Url }}" alt="Company Logo" class="img-fluid">
-                        @endif
+                       
+                            <img src="{{ $settings->BackgroundImg1Url ?? '' }}" alt="Company Logo" class="img-fluid">
+                      
                     </a>
                 </div>
             </div>

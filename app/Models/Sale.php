@@ -12,8 +12,19 @@ class Sale extends Model
         'customer_id',
         'total_amount',
         'payment_method',
-        'user_id'
+        'payment_status',
+        'amount_paid',
+        'amount_due',
+        'due_date',
+        'user_id',
+        'store_id'
     ];
+
+    // A Sale belongs to a Store
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
 
     // A Sale belongs to a Customer
     public function customer()

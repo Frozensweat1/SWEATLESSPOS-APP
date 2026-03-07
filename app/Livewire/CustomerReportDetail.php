@@ -5,15 +5,15 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Sale;
 use App\Models\Customer;
+use App\Traits\StoreScoped;
 use Carbon\Carbon;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 #[Layout('layouts.app')]
 class CustomerReportDetail extends Component
 {
-    use WithPagination;
+    use WithPagination, StoreScoped;
 
     public $customerId;
     public $customer;
@@ -25,8 +25,9 @@ class CustomerReportDetail extends Component
 
     public function mount($id)
     {
+        $this->initStoreId();
         $this->customerId = $id;
-        $this->customer = Customer::findOrFail($id);
+        $this->customer = Customer::where('store_id', $this->getStoreId())->findOrFail($id);
     }
 
     public function updatedStartDate()
@@ -41,10 +42,11 @@ class CustomerReportDetail extends Component
 
     public function render()
     {
-        $sales = Sale::with(['saleDetails' => function ($query) {
-            $query->where('is_refunded', false)
-                ->with('product');
-        }])
+        $sales = Sale::where('store_id', $this->getStoreId())
+            ->with(['saleDetails' => function ($query) {
+                $query->where('is_refunded', false)
+                    ->with('product');
+            }])
             ->where('customer_id', $this->customerId)
             ->when($this->startDate, function ($query) {
                 $query->whereDate('created_at', '>=', Carbon::parse($this->startDate));

@@ -23,7 +23,14 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
         view()->composer('*', function ($view) {
-            $settings = Setting::first();
+            $settings = Setting::first() ?? new Setting([
+                'site_name' => config('app.name', 'Sweatless POS'),
+                'currency' => 'GHS',
+                'contact_phone' => '',
+                'contact_email' => '',
+                'address' => '',
+                'receipt_header' => 'In God We Trust!',
+            ]);
             $view->with('settings', $settings);
         });
     }

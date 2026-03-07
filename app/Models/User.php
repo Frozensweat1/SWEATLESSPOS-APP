@@ -23,7 +23,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'profile_photo_path'
+        'profile_photo_path',
+        'store_id'
     ];
 
     protected $hidden = [
@@ -38,6 +39,12 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+    // A User belongs to a Store
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
+
     public function sales()
     {
         return $this->hasMany(Sale::class);

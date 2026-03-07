@@ -33,12 +33,13 @@ class SalesDashboard extends Component
             ->pluck('total', 'month')
             ->toArray(); // Ensure conversion to array
 
-        $this->categorySales = SaleDetail::where('is_refunded', false)
-            ->join('products', 'sale_details.product_id', '=', 'products.id')
-            ->select('products.category_id', DB::raw('SUM(sale_details.subtotal) as total'))
-            ->groupBy('products.category_id')
-            ->pluck('total', 'category_id')
-            ->toArray(); // Ensure conversion to array
+         $this->categorySales = SaleDetail::where('is_refunded', false)
+       ->join('products', 'sale_details.product_id', '=', 'products.id')
+       ->join('categories', 'products.category_id', '=', 'categories.id')
+       ->select('categories.name as category_name', DB::raw('SUM(sale_details.subtotal) as total'))
+       ->groupBy('categories.id', 'categories.name') // Group by category ID and name
+       ->pluck('total', 'category_name') // Pluck total with category name as key
+       ->toArray(); //Ensure conversion to array
 
         $this->paymentMethods = SaleDetail::where('is_refunded', false)
             ->join('sales', 'sale_details.sale_id', '=', 'sales.id')

@@ -26,7 +26,7 @@
 </div>
 
 @push('js')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ asset('vendors/chart.js/Chart.bundle.min.js') }}"></script>
 
     <script>
         function salesDashboardData() {

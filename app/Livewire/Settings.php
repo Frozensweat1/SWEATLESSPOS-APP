@@ -7,6 +7,7 @@ use App\Models\Setting;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Storage;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 #[Layout('layouts.app')]
 class Settings extends Component
@@ -41,27 +42,27 @@ class Settings extends Component
     {
         // Validate the input data
         $validatedData = $this->validate([
-            'site_name' => 'nullable|string',
-            'currency' => 'nullable|string',
-            'tax_rate' => 'nullable|numeric',
-            'contact_email' => 'nullable|email',
-            'contact_phone' => 'nullable|string',
-            'address' => 'nullable|string',
-            'receipt_header' => 'nullable|string',
-            'receipt_footer' => 'nullable|string',
-            'invoice_prefix' => 'nullable|string',
+            'site_name' => 'nullable|string|max:255',
+            'currency' => 'nullable|string|in:USD,EUR,GHS',
+            'tax_rate' => 'nullable|numeric|min:0|max:100',
+            'contact_email' => 'nullable|email|max:255',
+            'contact_phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+            'receipt_header' => 'nullable|string|max:255',
+            'receipt_footer' => 'nullable|string|max:255',
+            'invoice_prefix' => 'nullable|string|max:20',
             'auto_print_receipt' => 'boolean',
-            'theme_color' => 'nullable|string',
-            'currency_symbol' => 'nullable|string',
+            'theme_color' => 'nullable|string|in:default,dark,light',
+            'currency_symbol' => 'nullable|string|max:5',
             'enable_two_factor_auth' => 'boolean',
             'require_password_change' => 'boolean',
             'track_inventory' => 'boolean',
             'low_stock_threshold' => 'integer|min:0',
             'enable_expiry_tracking' => 'boolean',
-            'logo_new' => 'nullable|image|max:1024', // Max 1MB
-            'favicon_new' => 'nullable|image|max:512', // Max 512KB
-            'background_img1_new' => 'nullable|image|max:2048', // Max 2MB
-            'background_img2_new' => 'nullable|image|max:2048', // Max 2MB
+            'logo_new' => 'nullable|image|max:1024',
+            'favicon_new' => 'nullable|image|max:512',
+            'background_img1_new' => 'nullable|image|max:2048',
+            'background_img2_new' => 'nullable|image|max:2048',
         ]);
 
         try {
@@ -69,34 +70,49 @@ class Settings extends Component
             if ($this->logo_new) {
                 $this->deleteExistingFile($this->existing_logo);
                 $validatedData['logo'] = $this->logo_new->store('logos', 'public');
+                $this->existing_logo = $validatedData['logo'];
             }
             if ($this->favicon_new) {
                 $this->deleteExistingFile($this->existing_favicon);
                 $validatedData['favicon'] = $this->favicon_new->store('favicons', 'public');
+                $this->existing_favicon = $validatedData['favicon'];
             }
             if ($this->background_img1_new) {
                 $this->deleteExistingFile($this->existing_background_img1);
                 $validatedData['background_img1'] = $this->background_img1_new->store('backgrounds', 'public');
+                $this->existing_background_img1 = $validatedData['background_img1'];
             }
             if ($this->background_img2_new) {
                 $this->deleteExistingFile($this->existing_background_img2);
                 $validatedData['background_img2'] = $this->background_img2_new->store('backgrounds', 'public');
+                $this->existing_background_img2 = $validatedData['background_img2'];
             }
 
             // Save or update the settings record
-            $setting = Setting::first(); // fetch the first (and only) settings record
+            $setting = Setting::first();
+
             if ($setting) {
-                $setting->update($validatedData); // update if exists
+                $setting->update($validatedData);
             } else {
-                Setting::create($validatedData); // create if no record exists
+                Setting::create($validatedData);
             }
 
-            session()->flash('message', 'Settings updated successfully.');
+            // Clear file inputs after successful save
+            $this->reset(['logo_new', 'favicon_new', 'background_img1_new', 'background_img2_new']);
 
-            // Refresh component state to reflect the changes
-            $this->mount();
+            LivewireAlert::title('Success')
+                ->text('Settings updated successfully.')
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         } catch (\Exception $e) {
-            session()->flash('error', 'An error occurred while updating settings: ' . $e->getMessage());
+            LivewireAlert::title('Error')
+                ->text('An error occurred while updating settings. Please try again.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 

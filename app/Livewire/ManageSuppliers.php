@@ -4,12 +4,13 @@ namespace App\Livewire;
 
 use App\Models\Supplier;
 use App\Models\Notification;
+use App\Traits\StoreScoped;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Livewire\WithFileUploads;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Facades\Response;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Response;
 #[Layout('layouts.app')]
 class ManageSuppliers extends Component
 {
-    use WithFileUploads, WithPagination, LivewireAlert;
+    use WithFileUploads, WithPagination, StoreScoped;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -41,31 +42,39 @@ class ManageSuppliers extends Component
 
     public function mount()
     {
+        $this->initStoreId();
         $this->pageTitle = 'Manage Suppliers';
         $this->componentName = 'Suppliers';
     }
     public function confirmBulkDelete()
     {
         if (count($this->selectedSuppliers) > 0) {
-            $this->alert('warning', 'Are you sure?', [
-                'text' => 'You are about to delete selected suppliers.',
-                'showConfirmButton' => true,
-                'confirmButtonText' => 'Yes, Delete',
-                'onConfirmed' => 'bulkDeleteSuppliers',
-                'showCancelButton' => true,
-                'cancelButtonText' => 'Cancel',
-            ]);
+            LivewireAlert::title('Are you sure?')
+                ->html('You are about to delete selected suppliers.')
+                ->warning()
+                ->onConfirm('bulkDeleteSuppliers')
+                ->withConfirmButton('Yes, Delete')
+                ->withCancelButton('Cancel')
+                ->show();
         } else {
-            $this->alert('warning', 'No suppliers selected.');
+            LivewireAlert::warning('No suppliers selected.')
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
     public function bulkDeleteSuppliers()
     {
-        $suppliers = Supplier::whereIn('id', $this->selectedSuppliers)->get();
+        $suppliers = Supplier::where('store_id', $this->getStoreId())->whereIn('id', $this->selectedSuppliers)->get();
         $deletedNames = $suppliers->pluck('name')->toArray();
-        Supplier::whereIn('id', $this->selectedSuppliers)->delete();
+        Supplier::where('store_id', $this->getStoreId())->whereIn('id', $this->selectedSuppliers)->delete();
         $this->logNotification('Suppliers Bulk Deleted', 'Suppliers: ' . implode(', ', $deletedNames) . ' were deleted.');
-        $this->alert('success', 'Selected suppliers deleted successfully.');
+        LivewireAlert::title('Success')
+            ->text('Selected suppliers deleted successfully.')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
         $this->reset('selectedSuppliers');
     }
 
@@ -80,7 +89,7 @@ class ManageSuppliers extends Component
     }
     public function getSuppliersProperty()
     {
-        $query = Supplier::query()
+        $query = Supplier::where('store_id', $this->getStoreId())
             ->when($this->searchTerm, function ($query) {
                 $query->where(function ($subQuery) {
                     $subQuery->where('name', 'like', '%' . $this->searchTerm . '%')
@@ -183,7 +192,7 @@ class ManageSuppliers extends Component
     {
         $this->resetUI();
         $this->isEditMode = true;
-        $supplier = Supplier::find($id);
+        $supplier = Supplier::where('store_id', $this->getStoreId())->find($id);
         $this->selected_id = $supplier->id;
         $this->name = $supplier->name;
         $this->contact_person = $supplier->contact_person;
@@ -204,12 +213,18 @@ class ManageSuppliers extends Component
             'email' => $this->email,
             'phone' => $this->phone,
             'address' => $this->address,
-            'notes' => $this->notes
+            'notes' => $this->notes,
+            'store_id' => $this->getStoreId(),
         ]);
 
         $this->logNotification('Supplier Created', "Supplier '{$supplier->name}' created successfully.");
         $this->resetUI();
-        $this->alert('success', 'Supplier Registered Successfully!');
+        LivewireAlert::title('Success')
+            ->text('Supplier Registered Successfully!')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
     }
 
     public function Update()
@@ -217,7 +232,7 @@ class ManageSuppliers extends Component
         $this->validate();
 
         if ($this->selected_id) {
-            $supplier = Supplier::find($this->selected_id);
+            $supplier = Supplier::where('store_id', $this->getStoreId())->find($this->selected_id);
 
             $supplier->update([
                 'name' => $this->name,
@@ -230,34 +245,35 @@ class ManageSuppliers extends Component
 
             $this->logNotification('Supplier Updated', "Supplier '{$supplier->name}' updated successfully.");
             $this->resetUI();
-            $this->alert('success', 'Supplier Record Updated!');
+            LivewireAlert::title('Success')
+                ->text('Supplier Record Updated!')
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 
     public function delete($id)
     {
         $this->selected_id = $id;
-        $this->alert('warning', 'Are you sure you want to delete?', [
-            'position' => 'center',
-            'timer' => 6000,
-            'toast' => false,
-            'showConfirmButton' => true,
-            'onConfirmed' => 'confirmedDeletion',
-            'showCancelButton' => true,
-            'timerProgressBar' => false,
-            'width' => '400',
-        ]);
+        LivewireAlert::title('Are you sure you want to delete?')
+            ->warning()
+            ->onConfirm('confirmedDeletion')
+            ->withConfirmButton('Yes, Delete')
+            ->withCancelButton('Cancel')
+            ->show();
     }
 
     public function confirmedDeletion()
     {
-        $supplier = Supplier::find($this->selected_id);
+        $supplier = Supplier::where('store_id', $this->getStoreId())->find($this->selected_id);
         if ($supplier) {
             $supplier->delete();
             $this->logNotification('Supplier Deleted', "Supplier '{$supplier->name}' deleted successfully.");
-            $this->alert('success', 'Successfully Deleted ' . $supplier->name);
+            LivewireAlert::success('Successfully Deleted ' . $supplier->name)->show();
         } else {
-            $this->alert('error', 'Unable to delete supplier record.');
+            LivewireAlert::error('Unable to delete supplier record.')->show();
         }
     }
     protected $listeners = [

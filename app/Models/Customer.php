@@ -16,12 +16,19 @@ class Customer extends Model
         'address',
         'loyalty_points',
         'image',
-        'status'
+        'status',
+        'store_id'
     ];
 
     protected $casts = [
         'loyalty_points' => 'integer',
     ];
+
+    // A Customer belongs to a Store
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
 
     // Define a relationship to the Sale model
     public function sales()

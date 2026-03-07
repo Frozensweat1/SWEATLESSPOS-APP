@@ -17,8 +17,14 @@ class Supplier extends Model
         'phone',
         'address',
         'notes',
+        'store_id'
     ];
 
+    // A Supplier belongs to a Store
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
 
     // Relationships
     public function products()

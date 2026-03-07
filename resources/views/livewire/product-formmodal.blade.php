@@ -71,7 +71,7 @@
                 <label class="form-label" for="basic-form-select">Supplier</label>
                 <select class="form-select @error('supplier_id')is-invalid @enderror" id="inputState"
                     wire:model.defer="supplier_id">
-                    <option value="" disabled>Choose Supplier...</option>
+                    <option value="">Choose Supplier...</option>
 
                     @foreach ($suppliers as $supplier)
                         <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
@@ -106,11 +106,11 @@
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
                     @if ($currentImage && !$image)
-                        <img src="{{ asset('storage/' . $currentImage) }}" class="img-thumbnail mt-2" width="100">
+                        <img src="{{ asset('storage/' . $currentImage) }}" class="mt-2 img-thumbnail" width="100">
                     @endif
 
                     @if ($image)
-                        <img src="{{ $image->temporaryUrl() }}" class="img-thumbnail mt-2" width="100">
+                        <img src="{{ $image->temporaryUrl() }}" class="mt-2 img-thumbnail" width="100">
                     @endif
                 </div>
                 <div class="mb-3">

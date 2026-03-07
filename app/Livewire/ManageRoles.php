@@ -8,13 +8,12 @@ use App\Models\User;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\WithFileUploads;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class ManageRoles extends Component
 {
-    use WithFileUploads, LivewireAlert, WithPagination;
+    use WithFileUploads, WithPagination;
 
     protected $paginationTheme = 'bootstrap';
 

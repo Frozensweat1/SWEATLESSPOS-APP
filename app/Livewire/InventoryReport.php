@@ -5,18 +5,18 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Product;
+use App\Traits\StoreScoped;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use Livewire\Attributes\Layout;
 use Livewire\WithFileUploads;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 #[Layout('layouts.app')]
 class InventoryReport extends Component
 {
-    use WithPagination;
+    use WithPagination, StoreScoped;
 
     public $search = '';
     public $categoryFilter = '';
@@ -25,6 +25,11 @@ class InventoryReport extends Component
     public $perPage = 10;
 
     protected $paginationTheme = 'bootstrap';
+
+    public function __construct()
+    {
+        $this->initStoreId();
+    }
 
     public function updated($propertyName)
     {
@@ -73,7 +78,8 @@ class InventoryReport extends Component
 
     public function getProductsProperty()
     {
-        return Product::with(['category', 'supplier'])
+        return Product::where('store_id', $this->getStoreId())
+            ->with(['category', 'supplier'])
             ->when($this->search, fn($query) => $query->where('name', 'like', '%' . $this->search . '%'))
             ->when($this->categoryFilter, fn($query) => $query->where('category_id', $this->categoryFilter))
             ->when($this->supplierFilter, fn($query) => $query->where('supplier_id', $this->supplierFilter))
@@ -85,8 +91,8 @@ class InventoryReport extends Component
     {
         return view('livewire.inventory-report', [
             'products' => $this->products,
-            'categories' => \App\Models\Category::all(),
-            'suppliers' => \App\Models\Supplier::all(),
+            'categories' => \App\Models\Category::where('store_id', $this->getStoreId())->get(),
+            'suppliers' => \App\Models\Supplier::where('store_id', $this->getStoreId())->get(),
         ]);
     }
 }
