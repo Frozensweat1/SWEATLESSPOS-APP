@@ -3,7 +3,7 @@
 
     <div class="container py-4">
         <!-- Page Title -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="mb-4 d-flex justify-content-between align-items-center">
             <h2 class="h4">{{ $componentName }} | {{ $pageTitle }}</h2>
             <div class="btn-group">
                 <a href="{{ route('make.sales') }}" class="btn btn-falcon-default btn-sm">
@@ -31,7 +31,7 @@
         </div>
 
         <!-- Filters Section -->
-        <div class="card mb-4">
+        <div class="mb-4 card">
             <div class="card-body row g-3">
                 <div class="col-md-3">
                     <input type="text" class="form-control" placeholder="Search by Customer"
@@ -55,7 +55,7 @@
                 </div>
                 <div class="col-md-3">
                     <button wire:click="loadDateRange"
-                        class="btn btn-sm btn-outline-primary rounded-pill me-1  d-flex align-items-center w-100"
+                        class="btn btn-sm btn-outline-primary rounded-pill me-1 d-flex align-items-center w-100"
                         wire:loading.attr="disabled" wire:loading.class="disabled"
                         wire:loading.class.remove="btn-outline-primary" wire:loading.class.add="btn-primary">
                         <!-- Spinner -->
@@ -78,8 +78,8 @@
 
         <!-- Sales Table -->
         <div class="card">
-            <div class="card-body p-0">
-                <table class="table table-sm table-striped fs--1 mb-0 overflow-hidden">
+            <div class="p-0 card-body">
+                <table class="table mb-0 overflow-hidden table-sm table-striped fs--1">
                     <thead class="bg-200 text-900">
                         <tr>
                             <th><input class="form-check-input" type="checkbox" wire:model.live="selectAll"></th>
@@ -105,22 +105,31 @@
                                     <td>
                                         {{ $sale->customer ? $sale->customer->name : 'Guest' }}
                                     </td>
-                                    <td>{{ $detail->product->name }}</td>
+                                    <td>
+                                        @if ($detail->product)
+                                            {{ $detail->product->name }}
+                                        @else
+                                            <span class="text-danger">
+                                                <i
+                                                    class="fas fa-trash me-1"></i>{{ $detail->product_name ?? 'Deleted Product' }}
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td>{{ $detail->quantity }}</td>
                                     <td>Ghs {{ number_format($detail->subtotal, 2) }}</td>
                                     <td>{{ ucfirst($sale->payment_method) }}</td>
                                     <td>{{ $sale->created_at->format('Y-m-d') }}</td>
 
-                                    <td class="align-middle white-space-nowrap py-2 text-end">
+                                    <td class="py-2 align-middle white-space-nowrap text-end">
                                         <div class="dropdown font-sans-serif position-static">
                                             <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
                                                 type="button" id="customer-dropdown-0" data-bs-toggle="dropdown"
                                                 data-boundary="window" aria-haspopup="true" aria-expanded="false">
                                                 <span class="fas fa-ellipsis-h fs--1"></span>
                                             </button>
-                                            <div class="dropdown-menu dropdown-menu-end border py-0"
+                                            <div class="py-0 border dropdown-menu dropdown-menu-end"
                                                 aria-labelledby="customer-dropdown-0">
-                                                <div class="bg-white py-2">
+                                                <div class="py-2 bg-white">
                                                     <a class="dropdown-item text-primary"
                                                         wire:click="viewReceipt({{ $sale->id }})"
                                                         href="javascript:void(0)">
@@ -153,7 +162,7 @@
         </div>
 
         <!-- Bulk Actions and Pagination -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="mt-3 d-flex justify-content-between align-items-center">
             <div class="btn-group">
                 <button class="btn btn-outline-danger btn-sm d-flex" wire:click="bulkDelete">
                     <span class="fas fa-trash" data-fa-transform="shrink-3 down-2"></span>
@@ -176,7 +185,7 @@
             style="display: block;">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header bg-info text-white">
+                    <div class="text-white modal-header bg-info">
                         <h5 class="modal-title">
                             <i class="fas fa-receipt me-2"></i>Sale Receipt #{{ $viewingSale->id }}
                         </h5>
@@ -204,6 +213,16 @@
                                 {{ $viewingSale->created_at->format('M d, Y') }}</p>
                             <p style="margin: 3px 0;"><strong>Time:</strong>
                                 {{ $viewingSale->created_at->format('H:i:s') }}</p>
+                            <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                        </div>
+
+                        <!-- Shop Contact Details & Location -->
+                        <div style="margin-bottom: 15px; font-size: 10px;">
+                            <p style="margin: 2px 0;"><strong>{{ $settings->site_name ?? 'Sweatless POS' }}</strong>
+                            </p>
+                            <p style="margin: 2px 0;">{{ $settings->address ?? '' }}</p>
+                            <p style="margin: 2px 0;">Tel: {{ $settings->contact_phone ?? '' }}</p>
+                            <p style="margin: 2px 0;">Email: {{ $settings->contact_email ?? '' }}</p>
                             <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
                         </div>
 
@@ -238,7 +257,16 @@
                                 <tbody>
                                     @foreach ($viewingSale->saleDetails as $detail)
                                         <tr>
-                                            <td style="padding: 3px 0;">{{ $detail->product->name }}</td>
+                                            <td style="padding: 3px 0;">
+                                                @if ($detail->product)
+                                                    {{ $detail->product->name }}
+                                                @else
+                                                    <span style="color: #dc3545;">
+                                                        <i
+                                                            class="fas fa-trash me-1"></i>{{ $detail->product_name ?? 'Deleted Product' }}
+                                                    </span>
+                                                @endif
+                                            </td>
                                             <td style="text-align: center; padding: 3px 0;">{{ $detail->quantity }}
                                             </td>
                                             <td style="text-align: right; padding: 3px 0;">
@@ -299,21 +327,12 @@
     @endif
 </div>
 
-@once
-    @push('js')
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    @endpush
-@endonce
-
-@script
+@push('js')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
-        window.printViewSaleReceipt = function() {
+        function printViewSaleReceipt() {
             var receiptContent = document.getElementById('viewSaleReceipt');
-            if (!receiptContent) return;
-
             var printWindow = window.open('', '', 'width=800,height=600');
-            if (!printWindow) return;
-
             var htmlContent = '<!DOCTYPE html><html><head><title>Receipt</title><style>' +
                 'body { font-family: "Courier New", monospace; font-size: 12px; margin: 10px; padding: 0; } ' +
                 'table { width: 100%; border-collapse: collapse; } ' +
@@ -330,12 +349,10 @@
                 printWindow.print();
                 printWindow.close();
             }, 250);
-        };
+        }
 
-        window.downloadViewSaleReceipt = function() {
+        function downloadViewSaleReceipt() {
             const element = document.getElementById('viewSaleReceipt');
-            if (!element || typeof html2pdf === 'undefined') return;
-
             const opt = {
                 margin: 5,
                 filename: 'receipt_sale.pdf',
@@ -353,6 +370,6 @@
                 }
             };
             html2pdf().set(opt).from(element).save();
-        };
+        }
     </script>
-@endscript
+@endpush
