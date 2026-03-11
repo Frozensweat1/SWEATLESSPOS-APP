@@ -1,6 +1,34 @@
 <div>
     {{-- Be like water. --}}
     <div class="container mt-5">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-sm-5">
+                        <label class="form-label mb-1" for="dashboard-from-date">From</label>
+                        <input id="dashboard-from-date" type="date" class="form-control"
+                            wire:model.defer="fromDate">
+                    </div>
+                    <div class="col-sm-5">
+                        <label class="form-label mb-1" for="dashboard-to-date">To</label>
+                        <input id="dashboard-to-date" type="date" class="form-control"
+                            wire:model.defer="toDate">
+                    </div>
+                    <div class="col-sm-2 d-grid">
+                        <button class="btn btn-primary d-flex align-items-center justify-content-center"
+                            type="button" wire:click="applyDateFilter" wire:loading.attr="disabled"
+                            wire:target="applyDateFilter">
+                            <span wire:loading wire:target="applyDateFilter"
+                                class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <i class="fas fa-filter me-2" wire:loading.remove wire:target="applyDateFilter"></i>
+                            <span wire:loading.remove wire:target="applyDateFilter">Apply</span>
+                            <span wire:loading wire:target="applyDateFilter">Applying...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <!-- Sales Card -->
             <div class="col-md-4 mb-3">
@@ -78,6 +106,26 @@
                     <div class="card-body">
                         <h5 class="card-title">Total Expenses</h5>
                         <p class="card-text display-4">Ghs {{ number_format($totalExpenses, 2) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gross Profit Margin Card -->
+            <div class="col-md-6 mb-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Gross Profit Margin</h5>
+                        <p class="card-text display-4">Ghs {{ number_format($grossProfit, 2) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Net Profit Margin Card -->
+            <div class="col-md-6 mb-3">
+                <div class="card text-white bg-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title">Net Profit Margin</h5>
+                        <p class="card-text display-4">Ghs {{ number_format($netProfit, 2) }}</p>
                     </div>
                 </div>
             </div>
