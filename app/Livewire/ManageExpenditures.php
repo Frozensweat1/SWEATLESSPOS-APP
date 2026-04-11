@@ -26,7 +26,7 @@ class ManageExpenditures extends Component
     public $dateFilter = '';
     public $editExpenditure = null;
 
-    public $description, $amount, $category, $expenditure_date, $supplier_id, $notes;
+    public $description, $amount, $payment_method, $category, $expenditure_date, $supplier_id, $notes;
     public $componentName;
     public $pageTitle;
     public $searchengine;
@@ -38,6 +38,7 @@ class ManageExpenditures extends Component
         return [
             'description' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
+            'payment_method' => 'required|in:cash,credit_card,mobile_money,bank_transfer',
             'category' => 'nullable|string|max:255',
             'expenditure_date' => 'required|date',
             'supplier_id' => 'nullable|exists:suppliers,id',
@@ -76,7 +77,8 @@ class ManageExpenditures extends Component
 
     public function create()
     {
-        $this->reset('description', 'amount', 'category', 'expenditure_date', 'supplier_id', 'notes');
+        $this->reset('description', 'amount', 'payment_method', 'category', 'expenditure_date', 'supplier_id', 'notes');
+        $this->payment_method = 'cash';
         $this->resetUI();
         $this->openModal();
     }
@@ -89,7 +91,7 @@ class ManageExpenditures extends Component
     public function closeModal()
     {
         $this->isEditMode = false;
-        $this->reset('description', 'amount', 'category', 'expenditure_date', 'supplier_id', 'notes');
+        $this->reset('description', 'amount', 'payment_method', 'category', 'expenditure_date', 'supplier_id', 'notes');
         $this->resetUI();
     }
 
@@ -109,10 +111,12 @@ class ManageExpenditures extends Component
     public function Edit($id)
     {
         $this->resetUI();
-        $record = Expenditure::where('store_id', $this->getStoreId())->find($id, ['id', 'description', 'amount', 'category', 'expenditure_date', 'supplier_id', 'notes']);
+        $record = Expenditure::where('store_id', $this->getStoreId())
+            ->find($id, ['id', 'description', 'amount', 'payment_method', 'category', 'expenditure_date', 'supplier_id', 'notes']);
         $this->selected_id = $record->id;
         $this->description = $record->description;
         $this->amount = $record->amount;
+        $this->payment_method = $record->payment_method;
         $this->category = $record->category;
         $this->expenditure_date = $record->expenditure_date;
         $this->supplier_id = $record->supplier_id;
@@ -128,6 +132,7 @@ class ManageExpenditures extends Component
         Expenditure::create([
             'description' => $this->description,
             'amount' => $this->amount,
+            'payment_method' => $this->payment_method,
             'category' => $this->category,
             'expenditure_date' => $this->expenditure_date,
             'user_id' => Auth::id(),
@@ -140,7 +145,7 @@ class ManageExpenditures extends Component
         $this->logNotification('Expenditure Added', 'A new expenditure record was created.', 'success');
 
         // Reset form fields after saving
-        $this->reset(['description', 'amount', 'category', 'expenditure_date', 'supplier_id', 'notes']);
+        $this->reset(['description', 'amount', 'payment_method', 'category', 'expenditure_date', 'supplier_id', 'notes']);
 
         $this->dispatch('expenditure-added', 'Expenditure Added!');
         LivewireAlert::title('Success')
@@ -160,6 +165,7 @@ class ManageExpenditures extends Component
             $expenditure->update([
                 'description' => $this->description,
                 'amount' => $this->amount,
+                'payment_method' => $this->payment_method,
                 'category' => $this->category,
                 'expenditure_date' => $this->expenditure_date,
                 'supplier_id' => $this->supplier_id,
@@ -236,6 +242,7 @@ class ManageExpenditures extends Component
     {
         $this->description = '';
         $this->amount = '';
+        $this->payment_method = 'cash';
         $this->category = '';
         $this->expenditure_date = '';
         $this->supplier_id = '';

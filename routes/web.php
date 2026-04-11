@@ -17,6 +17,10 @@ use App\Livewire\SaleReport;
 use App\Livewire\ManageReturns;
 use App\Livewire\ManageRoles;
 use App\Livewire\ManageSales;
+use App\Livewire\ManageReorderAlerts;
+use App\Livewire\ManagePurchaseOrders;
+use App\Livewire\ManageCashDrawer;
+use App\Livewire\ManageStockAdjustments;
 use App\Livewire\ManageSuppliers;
 use App\Livewire\ManageUser;
 use App\Livewire\Notifications;
@@ -66,6 +70,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/manage-suppliers', ManageSuppliers::class)->name('manage.suppliers');
         Route::get('/manage-categories', ManageCategory::class)->name('manage.categories');
         Route::get('/manage-products', ManageProduct::class)->name('manage-products');
+        Route::get('/stock-adjustments', ManageStockAdjustments::class)->name('stock.adjustments');
+        Route::get('/reorder-alerts', ManageReorderAlerts::class)->name('reorder.alerts');
+        Route::get('/purchase-orders', ManagePurchaseOrders::class)->name('purchase.orders');
         Route::get('/manage-sales', ManageSales::class)->name('manage.sales');
         Route::get('/manage-debtors', ManageDebtors::class)->name('manage.debtors');
         Route::get('/make-sales', MakeSales::class)->name('make.sales');
@@ -79,6 +86,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     // Routes accessible by Cashier, Admin, and Super-Admin
     Route::middleware('role:cashier|admin|super-admin')->group(function () {
         Route::get('/make-sales', MakeSales::class)->name('make.sales');
+        Route::get('/cash-drawer', ManageCashDrawer::class)->name('cash.drawer');
         Route::get('/manage-customers', ManageCustomers::class)->name('manage.customers');
         Route::get('/sales-dashboard', \App\Livewire\SalesDashboard::class)->name('sales.dashboard');
         Route::get('/user/profile', \App\Livewire\UserProfile::class)->name('user.profile');

@@ -8,6 +8,7 @@ use App\Models\SaleDetail;
 use App\Models\Notification;
 use App\Models\Product;
 use App\Models\Refund;
+use App\Models\StockAdjustment;
 use App\Traits\StoreScoped;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -110,7 +111,21 @@ class ManageSales extends Component
             // Increase stock quantity of the refunded product
             $product = Product::where('store_id', $this->getStoreId())->find($this->product_id);
             if ($product) {
+                $beforeQty = (int) $product->stock_quantity;
                 $product->increment('stock_quantity', $this->quantity);
+                $afterQty = $beforeQty + (int) $this->quantity;
+
+                StockAdjustment::create([
+                    'store_id' => $this->getStoreId(),
+                    'product_id' => $product->id,
+                    'user_id' => Auth::id(),
+                    'type' => 'refund',
+                    'quantity_before' => $beforeQty,
+                    'quantity_after' => $afterQty,
+                    'change_qty' => $afterQty - $beforeQty,
+                    'reason' => 'Refund #' . $refund->id,
+                    'notes' => $this->reason,
+                ]);
             }
 
             // Update sale detail to indicate the item has been refunded

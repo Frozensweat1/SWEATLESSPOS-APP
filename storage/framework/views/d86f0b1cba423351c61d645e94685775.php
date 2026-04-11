@@ -15,23 +15,24 @@
             </button>
         </div>
         <a class="navbar-brand d-none d-md-flex align-items-center ms-2" href="<?php echo e(route('dashboard')); ?>">
-            <div class="d-flex align-items-center w-100">
+            <div class="d-flex align-items-center w-100 mt-3">
                 <img class="navbar-logo" src="<?php echo e($settings->LogoUrl ?? asset('assets/img/logo.png')); ?>"
                     alt="<?php echo e($settings->site_name ?? config('app.name', 'Sweatless-POS')); ?>"
                     style="height: 36px; width: auto; object-fit: contain;" />
                 <div class="ms-2 d-flex flex-column justify-content-center">
                     <span class="font-sans-serif fw-bold text-dark"
                         style="font-size: 15px; line-height: 1.2;"><?php echo e($settings->site_name ?? config('app.name', 'Sweatless-POS')); ?></span>
-                    <small class="text-muted" style="font-size: 11px;">Management System</small>
                 </div>
             </div>
         </a>
     </div>
     <div class="collapse navbar-collapse" id="navbarVerticalCollapse">
         <div class="px-3 py-2 navbar-vertical-content scrollbar px-xl-0">
-            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'super-admin')): ?>
+            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'super-admin|admin')): ?>
                 <?php
-                    $stores = \App\Models\Store::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+                    $stores = \App\Models\Store::where('is_active', true)
+                        ->orderBy('name')
+                        ->get(['id', 'name']);
                     $currentStoreId = session('current_store_id') ?? auth()->user()?->store_id;
                 ?>
                 <div class="mb-3 px-2">
@@ -52,6 +53,19 @@
                         </select>
                     </form>
                 </div>
+            <?php endif; ?>
+            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'cashier')): ?>
+                <?php
+                    $assignedStoreName = auth()->user()?->store?->name;
+                ?>
+                <?php if($assignedStoreName): ?>
+                    <div class="mb-3 px-2">
+                        <div class="form-label text-uppercase text-600 fw-bold mb-1" style="font-size: 10px;">
+                            Active Store
+                        </div>
+                        <div class="small text-muted"><?php echo e($assignedStoreName); ?></div>
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
 
             <ul class="mb-3 navbar-nav flex-column" id="navbarVerticalNav">
@@ -164,7 +178,7 @@
                     </li>
                     <!-- Product Management -->
                     <li class="nav-item">
-                        <a class="nav-link dropdown-indicator <?php echo e(Request::routeIs('manage.categories', 'manage-products') ? 'active' : ''); ?>"
+                        <a class="nav-link dropdown-indicator <?php echo e(Request::routeIs('manage.categories', 'manage-products', 'stock.adjustments', 'reorder.alerts', 'purchase.orders') ? 'active' : ''); ?>"
                             href="#products" role="button" data-bs-toggle="collapse" aria-expanded="false"
                             aria-controls="products">
                             <div class="d-flex align-items-center">
@@ -172,7 +186,7 @@
                                 <span class="nav-link-text ps-1">Product Management</span>
                             </div>
                         </a>
-                        <ul class="nav collapse <?php echo e(Request::routeIs('manage.categories', 'manage-products') ? 'show' : ''); ?>"
+                        <ul class="nav collapse <?php echo e(Request::routeIs('manage.categories', 'manage-products', 'stock.adjustments', 'reorder.alerts', 'purchase.orders') ? 'show' : ''); ?>"
                             id="products">
                             <li class="nav-item">
                                 <a class="nav-link <?php echo e(Request::routeIs('manage.categories') ? 'active' : ''); ?>"
@@ -190,13 +204,37 @@
                                     </div>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo e(Request::routeIs('stock.adjustments') ? 'active' : ''); ?>"
+                                    href="<?php echo e(route('stock.adjustments')); ?>">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-text ps-1">Stock Adjustments</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo e(Request::routeIs('reorder.alerts') ? 'active' : ''); ?>"
+                                    href="<?php echo e(route('reorder.alerts')); ?>">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-text ps-1">Reorder Alerts</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo e(Request::routeIs('purchase.orders') ? 'active' : ''); ?>"
+                                    href="<?php echo e(route('purchase.orders')); ?>">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-text ps-1">Purchase Orders</span>
+                                    </div>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 <?php endif; ?>
 
                 <!-- Sales/Transactions Section (Cashier and Above) -->
                 <?php if (\Illuminate\Support\Facades\Blade::check('role', 'super-admin|admin|cashier')): ?>
-                    <a class="nav-link dropdown-indicator <?php echo e(Request::routeIs('manage.sales', 'make.sales', 'manage.expenditure', 'manage.returns') ? 'active' : ''); ?>"
+                    <a class="nav-link dropdown-indicator <?php echo e(Request::routeIs('manage.sales', 'make.sales', 'manage.expenditure', 'manage.returns', 'cash.drawer') ? 'active' : ''); ?>"
                         href="#sales" role="button" data-bs-toggle="collapse" aria-expanded="false"
                         aria-controls="sales">
                         <div class="d-flex align-items-center">
@@ -204,7 +242,7 @@
                             <span class="nav-link-text ps-1">Sales/Transactions</span>
                         </div>
                     </a>
-                    <ul class="nav collapse <?php echo e(Request::routeIs('manage.sales', 'make.sales', 'manage.expenditure', 'manage.returns') ? 'show' : ''); ?>"
+                    <ul class="nav collapse <?php echo e(Request::routeIs('manage.sales', 'make.sales', 'manage.expenditure', 'manage.returns', 'cash.drawer') ? 'show' : ''); ?>"
                         id="sales">
                         <li class="nav-item">
                             <a class="nav-link dropdown-indicator <?php echo e(Request::routeIs('manage.sales', 'make.sales') ? 'active' : ''); ?>"
@@ -238,6 +276,14 @@
                                 href="<?php echo e(route('manage.expenditure')); ?>">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-text ps-1">Expenses</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo e(Request::routeIs('cash.drawer') ? 'active' : ''); ?>"
+                                href="<?php echo e(route('cash.drawer')); ?>">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-text ps-1">Cash Drawer</span>
                                 </div>
                             </a>
                         </li>

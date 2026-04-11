@@ -59,10 +59,10 @@ class Settings extends Component
             'track_inventory' => 'boolean',
             'low_stock_threshold' => 'integer|min:0',
             'enable_expiry_tracking' => 'boolean',
-            'logo_new' => 'nullable|image|max:1024',
-            'favicon_new' => 'nullable|image|max:512',
-            'background_img1_new' => 'nullable|image|max:2048',
-            'background_img2_new' => 'nullable|image|max:2048',
+            'logo_new' => 'nullable|image|max:3024',
+            'favicon_new' => 'nullable|image|max:2048',
+            'background_img1_new' => 'nullable|image|max:3048',
+            'background_img2_new' => 'nullable|image|max:3048',
         ]);
 
         try {

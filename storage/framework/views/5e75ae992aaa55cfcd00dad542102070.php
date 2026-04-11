@@ -288,6 +288,18 @@
 
                         <!-- Total -->
                         <div style="margin-bottom: 15px; font-size: 12px; font-weight: bold;">
+                            <!--[if BLOCK]><![endif]--><?php if(($viewingSale->total_discount ?? 0) > 0): ?>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding: 4px 0; font-weight: normal;">
+                                    <span>SUBTOTAL:</span>
+                                    <span>GHS<?php echo e(number_format($viewingSale->total_amount + $viewingSale->total_discount, 2)); ?></span>
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding: 4px 0; font-weight: normal;">
+                                    <span>DISCOUNT:</span>
+                                    <span>-GHS<?php echo e(number_format($viewingSale->total_discount, 2)); ?></span>
+                                </div>
+                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                             <div
                                 style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding: 8px 0;">
                                 <span>TOTAL:</span>

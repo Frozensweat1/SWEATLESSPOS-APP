@@ -9,6 +9,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\WithFileUploads;
 use App\Models\Product;
+use App\Models\StockAdjustment;
 use App\Models\Category;
 use App\Models\Notification;
 use App\Traits\StoreScoped;
@@ -253,6 +254,21 @@ class ManageProduct extends Component
             $product->update(['image' => $imagePath]);
         }
 
+        $initialQty = (int) $product->stock_quantity;
+        if ($initialQty !== 0) {
+            StockAdjustment::create([
+                'store_id' => $this->getStoreId(),
+                'product_id' => $product->id,
+                'user_id' => Auth::id(),
+                'type' => 'initial',
+                'quantity_before' => 0,
+                'quantity_after' => $initialQty,
+                'change_qty' => $initialQty,
+                'reason' => 'Initial stock',
+                'notes' => 'Product created with opening stock.',
+            ]);
+        }
+
         // Log Notification
         $this->logNotification('Product Created', "Product '{$product->name}' created.");
         $this->resetUI();
@@ -270,6 +286,7 @@ class ManageProduct extends Component
 
         if ($this->selected_id) {
             $product = Product::where('store_id', $this->getStoreId())->find($this->selected_id);
+            $beforeQty = $product ? (int) $product->stock_quantity : 0;
             $data = [
                 'name' => $this->name,
                 'barcode' => $this->barcode,
@@ -287,6 +304,21 @@ class ManageProduct extends Component
                 $data['image'] = $this->image->store('products', 'public');
             }
             $product->update($data);
+
+            $afterQty = (int) $data['stock_quantity'];
+            if ($beforeQty !== $afterQty) {
+                StockAdjustment::create([
+                    'store_id' => $this->getStoreId(),
+                    'product_id' => $product->id,
+                    'user_id' => Auth::id(),
+                    'type' => 'manual_update',
+                    'quantity_before' => $beforeQty,
+                    'quantity_after' => $afterQty,
+                    'change_qty' => $afterQty - $beforeQty,
+                    'reason' => 'Manual stock update',
+                    'notes' => "Updated from {$beforeQty} to {$afterQty}.",
+                ]);
+            }
             // Log Notification
             $this->logNotification('Product Updated', "Product '{$product->name}' updated.");
             $this->resetUI();

@@ -20,10 +20,14 @@ class SalesDashboard extends Component
     public $paymentMethods = []; // Payment methods for the pie chart
     public $fromDate;
     public $toDate;
+    public $componentName;
+    public $pageTitle;
 
     public function mount()
     {
         $this->initStoreId();
+        $this->componentName = 'Sales Dashboard';
+        $this->pageTitle = 'Analytics';
         $today = Carbon::today()->toDateString();
         $this->fromDate = $today;
         $this->toDate = $today;

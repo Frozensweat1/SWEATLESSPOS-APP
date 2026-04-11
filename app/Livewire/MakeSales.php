@@ -10,11 +10,12 @@ use Carbon\Carbon;
 use App\Models\Product;
 use App\Models\Customer;
 use App\Models\Setting;
+use App\Services\SalesService;
 use App\Traits\StoreScoped;
 use Livewire\Attributes\Layout;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 
 #[Layout('layouts.app')]
@@ -31,6 +32,15 @@ class MakeSales extends Component
     public $customer_id;
     public $payment_method;
     public $total_amount = 0;
+    public $subtotal_amount = 0;
+    public $total_discount = 0;
+    public $cart_discount_type = null;
+    public $cart_discount_value = 0;
+    public $cart_discount_amount = 0;
+    public $discount_override = false;
+    public $manager_email = '';
+    public $manager_password = '';
+    public $showDiscountAuthModal = false;
     public $showReceipt = false;
     public $saleBarcode;
     public $settings;
@@ -42,9 +52,13 @@ class MakeSales extends Component
     public $viewingCustomer = null;
     public $viewingSaleBarcode = null;
     public $showViewReceipt = false;
+
+    protected ?SalesService $salesService = null;
+
     public function mount()
     {
         $this->initStoreId();
+        $this->salesService = app(SalesService::class);
         $this->products = Product::where('store_id', $this->getStoreId())->withoutTrashed()->get();
         $this->customers = Customer::where('store_id', $this->getStoreId())->get();
         // Fetch settings information or create default
@@ -59,13 +73,17 @@ class MakeSales extends Component
         $this->loadRecentSales();
     }
 
+    protected function getSalesService(): SalesService
+    {
+        if ($this->salesService === null) {
+            $this->salesService = app(SalesService::class);
+        }
+        return $this->salesService;
+    }
+
     public function loadRecentSales()
     {
-        $this->recentSales = Sale::where('store_id', $this->getStoreId())
-            ->with(['customer', 'saleDetails.product'])
-            ->orderBy('created_at', 'desc')
-            ->limit(15)
-            ->get();
+        $this->recentSales = $this->getSalesService()->getRecentSales($this->getStoreId(), 15);
     }
 
     public function viewReceipt($saleId)
@@ -135,13 +153,15 @@ class MakeSales extends Component
 
         if ($existingCartIndex !== false) {
             $this->cart[$existingCartIndex]['quantity']++;
-            $this->cart[$existingCartIndex]['total'] += $product->price;
         } else {
             $this->cart[] = [
                 'product_id' => $product->id,
                 'name' => $product->name,
                 'quantity' => 1,
                 'price_per_unit' => $product->price,
+                'discount_type' => null,
+                'discount_value' => 0,
+                'discount_amount' => 0,
                 'total' => $product->price,
             ];
         }
@@ -152,9 +172,97 @@ class MakeSales extends Component
     {
         if ($newQuantity > 0) {
             $this->cart[$index]['quantity'] = $newQuantity;
-            $this->cart[$index]['total'] = $this->cart[$index]['price_per_unit'] * $newQuantity;
             $this->updateTotalAmount();
         }
+    }
+
+    public function updateItemDiscount($index)
+    {
+        if (!$this->canApplyDiscount()) {
+            return;
+        }
+
+        if (!isset($this->cart[$index])) {
+            return;
+        }
+
+        $type = $this->cart[$index]['discount_type'] ?? null;
+        $value = (float) ($this->cart[$index]['discount_value'] ?? 0);
+
+        if ($type === 'percent') {
+            $value = max(0, min(100, $value));
+        } elseif ($type === 'amount') {
+            $value = max(0, $value);
+        } else {
+            $value = 0;
+        }
+
+        $this->cart[$index]['discount_value'] = $value;
+        $this->updateTotalAmount();
+    }
+
+    public function updateCartDiscount()
+    {
+        if (!$this->canApplyDiscount()) {
+            $this->cart_discount_type = null;
+            $this->cart_discount_value = 0;
+            $this->cart_discount_amount = 0;
+            $this->updateTotalAmount();
+            return;
+        }
+
+        $value = (float) $this->cart_discount_value;
+        if ($this->cart_discount_type === 'percent') {
+            $this->cart_discount_value = max(0, min(100, $value));
+        } elseif ($this->cart_discount_type === 'amount') {
+            $this->cart_discount_value = max(0, $value);
+        } else {
+            $this->cart_discount_type = null;
+            $this->cart_discount_value = 0;
+        }
+
+        $this->updateTotalAmount();
+    }
+
+    public function openDiscountAuthModal()
+    {
+        $this->showDiscountAuthModal = true;
+    }
+
+    public function closeDiscountAuthModal()
+    {
+        $this->showDiscountAuthModal = false;
+        $this->manager_password = '';
+    }
+
+    public function authorizeDiscount()
+    {
+        $this->validate([
+            'manager_email' => 'required|email',
+            'manager_password' => 'required|string',
+        ]);
+
+        $manager = \App\Models\User::where('email', $this->manager_email)->first();
+        if (!$manager || !$manager->hasRole('super-admin|admin') || !Hash::check($this->manager_password, $manager->password)) {
+            LivewireAlert::title('Error')
+                ->text('Invalid manager credentials.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        $this->discount_override = true;
+        $this->manager_password = '';
+        $this->showDiscountAuthModal = false;
+
+        LivewireAlert::title('Authorized')
+            ->text('Discounts are now enabled for this sale.')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
     }
     public function removeProductFromCart($index)
     {
@@ -166,13 +274,90 @@ class MakeSales extends Component
     }
     public function updateTotalAmount()
     {
-        $this->total_amount = collect($this->cart)->sum('total');
+        $subtotal = 0;
+        $itemDiscountTotal = 0;
+
+        foreach ($this->cart as $index => $item) {
+            $lineSubtotal = (float) $item['price_per_unit'] * (int) $item['quantity'];
+            $discount = $this->calculateItemDiscount(
+                $lineSubtotal,
+                $item['discount_type'] ?? null,
+                $item['discount_value'] ?? 0
+            );
+
+            $this->cart[$index]['discount_amount'] = $discount;
+            $this->cart[$index]['total'] = $lineSubtotal - $discount;
+
+            $subtotal += $lineSubtotal;
+            $itemDiscountTotal += $discount;
+        }
+
+        $this->subtotal_amount = round($subtotal, 2);
+        $cartBase = max(0, $subtotal - $itemDiscountTotal);
+        $cartDiscount = $this->calculateCartDiscount($cartBase);
+
+        $this->cart_discount_amount = $cartDiscount;
+        $this->total_discount = round($itemDiscountTotal + $cartDiscount, 2);
+        $this->total_amount = round(max(0, $cartBase - $cartDiscount), 2);
+    }
+
+    protected function calculateItemDiscount($lineSubtotal, $type, $value)
+    {
+        if (!$this->canApplyDiscount() || !$type) {
+            return 0;
+        }
+
+        $value = (float) $value;
+
+        if ($type === 'percent') {
+            $value = max(0, min(100, $value));
+            return round($lineSubtotal * ($value / 100), 2);
+        }
+
+        if ($type === 'amount') {
+            $value = max(0, min($lineSubtotal, $value));
+            return round($value, 2);
+        }
+
+        return 0;
+    }
+
+    protected function calculateCartDiscount($baseAmount)
+    {
+        if (!$this->canApplyDiscount() || !$this->cart_discount_type) {
+            return 0;
+        }
+
+        $value = (float) $this->cart_discount_value;
+        if ($this->cart_discount_type === 'percent') {
+            $value = max(0, min(100, $value));
+            return round($baseAmount * ($value / 100), 2);
+        }
+
+        if ($this->cart_discount_type === 'amount') {
+            $value = max(0, min($baseAmount, $value));
+            return round($value, 2);
+        }
+
+        return 0;
+    }
+
+    protected function canApplyDiscount()
+    {
+        $user = Auth::user();
+        return ($user && $user->hasRole('super-admin|admin')) || $this->discount_override;
+    }
+
+    public function getDiscountAllowedProperty()
+    {
+        return $this->canApplyDiscount();
     }
 
     public function processSale()
     {
+        $this->updateTotalAmount();
+
         if (empty($this->cart)) {
-            // Alert warning if the cart is empty
             LivewireAlert::title('Warning')
                 ->text('Cart is empty. Please add items before processing the sale.')
                 ->warning()
@@ -183,7 +368,6 @@ class MakeSales extends Component
         }
 
         if (!$this->payment_method) {
-            // Alert warning if payment method is not selected
             LivewireAlert::title('Warning')
                 ->text('Please select a payment method before processing the sale.')
                 ->warning()
@@ -194,7 +378,6 @@ class MakeSales extends Component
         }
 
         if ($this->payment_method === 'credit' && !$this->customer_id) {
-            // Alert warning if credit sale without customer
             LivewireAlert::title('Warning')
                 ->text('Please select a customer for credit sales.')
                 ->warning()
@@ -204,57 +387,46 @@ class MakeSales extends Component
             return;
         }
 
-        DB::beginTransaction();
+        if ($this->total_discount > 0 && !$this->canApplyDiscount()) {
+            LivewireAlert::title('Error')
+                ->text('You are not authorized to apply discounts.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
 
         try {
-            // Determine payment status based on payment method
-            $isCredit = $this->payment_method === 'credit';
-
-            // Step 1: Create the Sale record with payment status
-            $sale = Sale::create([
-                'store_id' => $this->getStoreId(),
-                'customer_id' => $this->customer_id,
-                'total_amount' => $this->total_amount,
-                'payment_method' => $this->payment_method,
-                'payment_status' => $isCredit ? 'pending' : 'paid',
-                'amount_paid' => $isCredit ? 0 : $this->total_amount,
-                'amount_due' => $isCredit ? $this->total_amount : 0,
-                'due_date' => $isCredit ? \Carbon\Carbon::now()->addDays(30) : null,
-                'user_id' => Auth::id(),
-                'created_at' => Carbon::now(),
-            ]);
-
-            // Step 2: Loop through the cart, create SaleDetail records, and update stock
+            // Format cart items for service
+            $cartItems = [];
             foreach ($this->cart as $item) {
-                $product = Product::where('store_id', $this->getStoreId())->find($item['product_id']);
-
-                if ($product && $product->stock_quantity >= $item['quantity']) {
-                    // Reduce the stock quantity
-                    $product->decrement('stock_quantity', $item['quantity']);
-
-                    // Create the SaleDetail record with product name
-                    SaleDetail::create([
-                        'sale_id' => $sale->id,
-                        'product_id' => $item['product_id'],
-                        'product_name' => $product->name,
-                        'quantity' => $item['quantity'],
-                        'price_per_unit' => $item['price_per_unit'],
-                        'subtotal' => $item['total'],
-                    ]);
-                } else {
-                    // Handle insufficient stock scenario
-                    DB::rollBack();
-                    LivewireAlert::title('Error')
-                        ->text('Insufficient stock for ' . $product->name)
-                        ->error()
-                        ->toast()
-                        ->position('top-end')
-                        ->show();
-                    return;
-                }
+                $cartItems[$item['product_id']] = [
+                    'product_id' => $item['product_id'],
+                    'price' => $item['price_per_unit'],
+                    'quantity' => $item['quantity'],
+                ];
             }
 
-            // Step 3: Generate the barcode for the sale ID
+            // Determine amount paid
+            $isCredit = $this->payment_method === 'credit';
+            $amountPaid = $isCredit ? 0 : $this->total_amount;
+
+            // Create the sale using service
+            $sale = $this->getSalesService()->createSale(
+                $this->getStoreId(),
+                $cartItems,
+                $this->customer_id,
+                $this->payment_method,
+                $amountPaid,
+                [
+                    'discount_type' => $this->cart_discount_type,
+                    'discount_value' => $this->cart_discount_value,
+                    'discount_amount' => $this->cart_discount_amount,
+                ]
+            );
+
+            // Generate barcode for the sale
             $barcodeGenerator = new BarcodeGeneratorPNG();
             $this->saleBarcode = base64_encode($barcodeGenerator->getBarcode($sale->id, $barcodeGenerator::TYPE_CODE_128));
             $this->currentSale = $sale;
@@ -264,10 +436,8 @@ class MakeSales extends Component
                 $this->buying_customer = Customer::where('store_id', $this->getStoreId())->find($this->customer_id);
             }
 
-            // Step 4: Log the notification for the sale
+            // Log notification
             $this->logNotification('Sale Processed', 'Sale has been processed successfully.', 'success');
-
-            DB::commit();
 
             LivewireAlert::title('Success')
                 ->text('Sale Processed Successfully!')
@@ -277,9 +447,8 @@ class MakeSales extends Component
                 ->show();
             $this->showReceipt = true;
         } catch (\Exception $e) {
-            DB::rollBack();
             LivewireAlert::title('Error')
-                ->text('An error occurred while processing the sale. Please try again.')
+                ->text($e->getMessage() ?: 'An error occurred while processing the sale. Please try again.')
                 ->error()
                 ->toast()
                 ->position('top-end')
@@ -312,6 +481,15 @@ class MakeSales extends Component
     {
         $this->cart = [];
         $this->total_amount = 0;
+        $this->subtotal_amount = 0;
+        $this->total_discount = 0;
+        $this->cart_discount_type = null;
+        $this->cart_discount_value = 0;
+        $this->cart_discount_amount = 0;
+        $this->discount_override = false;
+        $this->manager_email = '';
+        $this->manager_password = '';
+        $this->showDiscountAuthModal = false;
         $this->barcode = '';
         $this->selectedProduct = null;
         $this->currentSale = null;
@@ -325,7 +503,8 @@ class MakeSales extends Component
     {
         return view('livewire.make-sales', [
             'saleBarcode' => $this->saleBarcode,
-            'recentSales' => $this->recentSales
+            'recentSales' => $this->recentSales,
+            'discountAllowed' => $this->getDiscountAllowedProperty(),
         ]);
     }
 }

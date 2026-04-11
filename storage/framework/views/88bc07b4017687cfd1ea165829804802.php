@@ -41,6 +41,9 @@
                             <th scope="col">Product</th>
                             <th scope="col">Price</th>
                             <th scope="col">Quantity</th>
+                            <!--[if BLOCK]><![endif]--><?php if($discountAllowed): ?>
+                                <th scope="col">Discount</th>
+                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                             <th scope="col">Toatal</th>
                             <th class="text-end" scope="col">Actions</th>
                         </tr>
@@ -55,6 +58,28 @@
                                     <input type="number" wire:model="cart.<?php echo e($index); ?>.quantity"
                                         wire:change="updateQuantity(<?php echo e($index); ?>, $event.target.value)" />
                                 </td>
+                                <!--[if BLOCK]><![endif]--><?php if($discountAllowed): ?>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <select class="form-select form-select-sm"
+                                                wire:model="cart.<?php echo e($index); ?>.discount_type"
+                                                wire:change="updateItemDiscount(<?php echo e($index); ?>)">
+                                                <option value="">None</option>
+                                                <option value="percent">%</option>
+                                                <option value="amount">Amount</option>
+                                            </select>
+                                            <input type="number" class="form-control form-control-sm" min="0"
+                                                step="0.01" wire:model="cart.<?php echo e($index); ?>.discount_value"
+                                                wire:change="updateItemDiscount(<?php echo e($index); ?>)" placeholder="0">
+                                        </div>
+                                        <!--[if BLOCK]><![endif]--><?php if(!empty($item['discount_amount'])): ?>
+                                            <div class="text-muted small mt-1">
+                                                -<?php echo e(number_format($item['discount_amount'], 2)); ?>
+
+                                            </div>
+                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                    </td>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                 <td><?php echo e(number_format($item['total'], 2)); ?></td>
                                 <td class="text-end">
                                     <div>
@@ -94,8 +119,39 @@
 
             <div class="col-md-auto">
                 <!-- Total Amount -->
-                <h3>Total: <?php echo e(number_format($total_amount, 2)); ?></h3>
+                <div class="fw-semibold">Subtotal: <?php echo e(number_format($subtotal_amount, 2)); ?></div>
+                <!--[if BLOCK]><![endif]--><?php if($discountAllowed): ?>
+                    <div class="text-muted small">Discounts: <?php echo e(number_format($total_discount, 2)); ?></div>
+                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                <h3 class="mt-1">Total: <?php echo e(number_format($total_amount, 2)); ?></h3>
             </div>
+            <!--[if BLOCK]><![endif]--><?php if($discountAllowed): ?>
+                <div class="col-md-auto">
+                    <div class="d-flex align-items-center gap-2">
+                        <select class="form-control form-control-sm" wire:model="cart_discount_type"
+                            wire:change="updateCartDiscount">
+                            <option value="">Cart Discount</option>
+                            <option value="percent">%</option>
+                            <option value="amount">Amount</option>
+                        </select>
+                        <input type="number" class="form-control form-control-sm" min="0" step="0.01"
+                            wire:model="cart_discount_value" wire:change="updateCartDiscount" placeholder="0">
+                    </div>
+                    <!--[if BLOCK]><![endif]--><?php if($cart_discount_amount > 0): ?>
+                        <div class="text-muted small mt-1">
+                            Cart discount: -<?php echo e(number_format($cart_discount_amount, 2)); ?>
+
+                        </div>
+                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                </div>
+            <?php else: ?>
+                <div class="col-md-auto d-flex align-items-center">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                        wire:click="openDiscountAuthModal">
+                        <i class="fas fa-user-shield me-1"></i>Authorize Discount
+                    </button>
+                </div>
+            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
             <div class="col-md-auto">
                 <!-- Payment Method and Checkout -->
                 <select class="form-control form-control-sm" wire:model="payment_method">
@@ -213,8 +269,14 @@
             <div style="margin-bottom: 15px; font-size: 11px;">
                 <div style="display: flex; justify-content: space-between; margin: 5px 0;">
                     <span><strong>Subtotal:</strong></span>
-                    <span>GHS<?php echo e(number_format($total_amount, 2)); ?></span>
+                    <span>GHS<?php echo e(number_format($subtotal_amount, 2)); ?></span>
                 </div>
+                <!--[if BLOCK]><![endif]--><?php if($total_discount > 0): ?>
+                    <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                        <span><strong>Discount:</strong></span>
+                        <span>-GHS<?php echo e(number_format($total_discount, 2)); ?></span>
+                    </div>
+                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                 <div
                     style="display: flex; justify-content: space-between; margin: 5px 0; font-weight: bold; border-top: 1px dashed #999; border-bottom: 2px solid #333; padding: 8px 0;">
                     <span>TOTAL:</span>
@@ -430,13 +492,25 @@
                                 <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
                             </div>
 
-                            <!-- Total -->
-                            <div style="margin-bottom: 15px; font-size: 12px; font-weight: bold;">
+                        <!-- Total -->
+                        <div style="margin-bottom: 15px; font-size: 12px; font-weight: bold;">
+                            <!--[if BLOCK]><![endif]--><?php if(($viewingSale->total_discount ?? 0) > 0): ?>
                                 <div
-                                    style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding: 8px 0;">
-                                    <span>TOTAL:</span>
-                                    <span>GHS<?php echo e(number_format($viewingSale->total_amount, 2)); ?></span>
+                                    style="display: flex; justify-content: space-between; padding: 4px 0; font-weight: normal;">
+                                    <span>SUBTOTAL:</span>
+                                    <span>GHS<?php echo e(number_format($viewingSale->total_amount + $viewingSale->total_discount, 2)); ?></span>
                                 </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding: 4px 0; font-weight: normal;">
+                                    <span>DISCOUNT:</span>
+                                    <span>-GHS<?php echo e(number_format($viewingSale->total_discount, 2)); ?></span>
+                                </div>
+                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                            <div
+                                style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding: 8px 0;">
+                                <span>TOTAL:</span>
+                                <span>GHS<?php echo e(number_format($viewingSale->total_amount, 2)); ?></span>
+                            </div>
                             </div>
 
                             <!-- Payment Status -->
@@ -478,6 +552,66 @@
             <div class="modal-backdrop fade show"></div>
         <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
+        <!-- Discount Authorization Modal -->
+        <!--[if BLOCK]><![endif]--><?php if($showDiscountAuthModal): ?>
+            <div class="modal fade show" id="discountAuthModal" data-bs-keyboard="false" data-bs-backdrop="static"
+                style="display: block;">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-secondary text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-user-shield me-2"></i>Manager Authorization
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white"
+                                wire:click="closeDiscountAuthModal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Manager Email</label>
+                                <input type="email" class="form-control" wire:model.defer="manager_email"
+                                    placeholder="manager@example.com">
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['manager_email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <span class="text-danger small"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" wire:model.defer="manager_password">
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['manager_password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <span class="text-danger small"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                            </div>
+                            <div class="text-muted small">
+                                Discounts are restricted. An admin or super-admin must authorize.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary"
+                                wire:click="closeDiscountAuthModal">Cancel</button>
+                            <button type="button" class="btn btn-primary" wire:click="authorizeDiscount">
+                                <i class="fas fa-check me-1"></i>Authorize
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-backdrop fade show"></div>
+        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
         <?php $__env->startPush('styles'); ?>
             <link href="<?php echo e(asset('vendors/choices/choices.min.css')); ?>" rel="stylesheet" />
             <style>
@@ -505,7 +639,7 @@
                 }
             </style>
         <?php $__env->stopPush(); ?>
-        <?php if (! $__env->hasRenderedOnce('33f54d4d-d44d-45cf-83e3-2f97dd9798fb')): $__env->markAsRenderedOnce('33f54d4d-d44d-45cf-83e3-2f97dd9798fb'); ?>
+        <?php if (! $__env->hasRenderedOnce('00e2cd1d-00da-4117-a725-4ced22e09a38')): $__env->markAsRenderedOnce('00e2cd1d-00da-4117-a725-4ced22e09a38'); ?>
             <?php $__env->startPush('js'); ?>
                 <!-- Choice.js -->
                 <script src="<?php echo e(asset('vendors/choices/choices.min.js')); ?>"></script>

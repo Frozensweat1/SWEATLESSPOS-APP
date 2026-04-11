@@ -19,6 +19,22 @@
             </div>
         </div>
     </a>
+    @php
+        $headerComponentName = $componentName ?? null;
+        $headerPageTitle = $pageTitle ?? null;
+        $routeName = request()->route()?->getName();
+        $routeLabel = $routeName ? \Illuminate\Support\Str::title(str_replace('.', ' ', $routeName)) : null;
+    @endphp
+    @if ($headerComponentName || $headerPageTitle || $routeLabel)
+        <div class="d-none d-md-flex align-items-center ms-2">
+            <span class="fw-bold text-dark">
+                {{ $headerComponentName ?? $routeLabel }}
+                @if ($headerPageTitle)
+                    <span class="text-muted"> | {{ $headerPageTitle }}</span>
+                @endif
+            </span>
+        </div>
+    @endif
     <ul class="flex-row navbar-nav navbar-nav-icons ms-auto align-items-center">
         <li class="nav-item">
             <div class="px-2 theme-control-toggle fa-icon-wait">
@@ -82,3 +98,22 @@
         </li>
     </ul>
 </nav>
+
+@push('js')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var toggle = document.getElementById('themeControlToggle');
+            if (!toggle) return;
+
+            var currentTheme = localStorage.getItem('theme') || 'light';
+            toggle.checked = currentTheme === 'dark';
+            document.documentElement.classList.toggle('dark', currentTheme === 'dark');
+
+            toggle.addEventListener('change', function(e) {
+                var theme = e.target.checked ? 'dark' : 'light';
+                localStorage.setItem('theme', theme);
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+            });
+        });
+    </script>
+@endpush

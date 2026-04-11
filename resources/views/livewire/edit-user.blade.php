@@ -46,6 +46,18 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="basic-form-store">Store</label>
+                        <select class="form-select" id="basic-form-store" wire:model="store_id">
+                            <option value="">-- Select Store --</option>
+                            @foreach ($stores as $store)
+                                <option value="{{ $store->id }}">{{ $store->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('store_id')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
 
                     <div class="mb-3">
                         <label class="form-label">Upload Image</label>

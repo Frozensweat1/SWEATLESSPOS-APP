@@ -41,6 +41,9 @@
                             <th scope="col">Product</th>
                             <th scope="col">Price</th>
                             <th scope="col">Quantity</th>
+                            @if ($discountAllowed)
+                                <th scope="col">Discount</th>
+                            @endif
                             <th scope="col">Toatal</th>
                             <th class="text-end" scope="col">Actions</th>
                         </tr>
@@ -55,6 +58,27 @@
                                     <input type="number" wire:model="cart.{{ $index }}.quantity"
                                         wire:change="updateQuantity({{ $index }}, $event.target.value)" />
                                 </td>
+                                @if ($discountAllowed)
+                                    <td>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <select class="form-select form-select-sm"
+                                                wire:model="cart.{{ $index }}.discount_type"
+                                                wire:change="updateItemDiscount({{ $index }})">
+                                                <option value="">None</option>
+                                                <option value="percent">%</option>
+                                                <option value="amount">Amount</option>
+                                            </select>
+                                            <input type="number" class="form-control form-control-sm" min="0"
+                                                step="0.01" wire:model="cart.{{ $index }}.discount_value"
+                                                wire:change="updateItemDiscount({{ $index }})" placeholder="0">
+                                        </div>
+                                        @if (!empty($item['discount_amount']))
+                                            <div class="text-muted small mt-1">
+                                                -{{ number_format($item['discount_amount'], 2) }}
+                                            </div>
+                                        @endif
+                                    </td>
+                                @endif
                                 <td>{{ number_format($item['total'], 2) }}</td>
                                 <td class="text-end">
                                     <div>
@@ -94,8 +118,38 @@
 
             <div class="col-md-auto">
                 <!-- Total Amount -->
-                <h3>Total: {{ number_format($total_amount, 2) }}</h3>
+                <div class="fw-semibold">Subtotal: {{ number_format($subtotal_amount, 2) }}</div>
+                @if ($discountAllowed)
+                    <div class="text-muted small">Discounts: {{ number_format($total_discount, 2) }}</div>
+                @endif
+                <h3 class="mt-1">Total: {{ number_format($total_amount, 2) }}</h3>
             </div>
+            @if ($discountAllowed)
+                <div class="col-md-auto">
+                    <div class="d-flex align-items-center gap-2">
+                        <select class="form-control form-control-sm" wire:model="cart_discount_type"
+                            wire:change="updateCartDiscount">
+                            <option value="">Cart Discount</option>
+                            <option value="percent">%</option>
+                            <option value="amount">Amount</option>
+                        </select>
+                        <input type="number" class="form-control form-control-sm" min="0" step="0.01"
+                            wire:model="cart_discount_value" wire:change="updateCartDiscount" placeholder="0">
+                    </div>
+                    @if ($cart_discount_amount > 0)
+                        <div class="text-muted small mt-1">
+                            Cart discount: -{{ number_format($cart_discount_amount, 2) }}
+                        </div>
+                    @endif
+                </div>
+            @else
+                <div class="col-md-auto d-flex align-items-center">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                        wire:click="openDiscountAuthModal">
+                        <i class="fas fa-user-shield me-1"></i>Authorize Discount
+                    </button>
+                </div>
+            @endif
             <div class="col-md-auto">
                 <!-- Payment Method and Checkout -->
                 <select class="form-control form-control-sm" wire:model="payment_method">
@@ -213,8 +267,14 @@
             <div style="margin-bottom: 15px; font-size: 11px;">
                 <div style="display: flex; justify-content: space-between; margin: 5px 0;">
                     <span><strong>Subtotal:</strong></span>
-                    <span>GHS{{ number_format($total_amount, 2) }}</span>
+                    <span>GHS{{ number_format($subtotal_amount, 2) }}</span>
                 </div>
+                @if ($total_discount > 0)
+                    <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                        <span><strong>Discount:</strong></span>
+                        <span>-GHS{{ number_format($total_discount, 2) }}</span>
+                    </div>
+                @endif
                 <div
                     style="display: flex; justify-content: space-between; margin: 5px 0; font-weight: bold; border-top: 1px dashed #999; border-bottom: 2px solid #333; padding: 8px 0;">
                     <span>TOTAL:</span>
@@ -425,13 +485,25 @@
                                 <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
                             </div>
 
-                            <!-- Total -->
-                            <div style="margin-bottom: 15px; font-size: 12px; font-weight: bold;">
+                        <!-- Total -->
+                        <div style="margin-bottom: 15px; font-size: 12px; font-weight: bold;">
+                            @if (($viewingSale->total_discount ?? 0) > 0)
                                 <div
-                                    style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding: 8px 0;">
-                                    <span>TOTAL:</span>
-                                    <span>GHS{{ number_format($viewingSale->total_amount, 2) }}</span>
+                                    style="display: flex; justify-content: space-between; padding: 4px 0; font-weight: normal;">
+                                    <span>SUBTOTAL:</span>
+                                    <span>GHS{{ number_format($viewingSale->total_amount + $viewingSale->total_discount, 2) }}</span>
                                 </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding: 4px 0; font-weight: normal;">
+                                    <span>DISCOUNT:</span>
+                                    <span>-GHS{{ number_format($viewingSale->total_discount, 2) }}</span>
+                                </div>
+                            @endif
+                            <div
+                                style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding: 8px 0;">
+                                <span>TOTAL:</span>
+                                <span>GHS{{ number_format($viewingSale->total_amount, 2) }}</span>
+                            </div>
                             </div>
 
                             <!-- Payment Status -->
@@ -465,6 +537,52 @@
                             </button>
                             <button class="btn btn-success" type="button" onclick="downloadViewReceipt()">
                                 <i class="fas fa-download me-2"></i>Download PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-backdrop fade show"></div>
+        @endif
+
+        <!-- Discount Authorization Modal -->
+        @if ($showDiscountAuthModal)
+            <div class="modal fade show" id="discountAuthModal" data-bs-keyboard="false" data-bs-backdrop="static"
+                style="display: block;">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-secondary text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-user-shield me-2"></i>Manager Authorization
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white"
+                                wire:click="closeDiscountAuthModal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Manager Email</label>
+                                <input type="email" class="form-control" wire:model.defer="manager_email"
+                                    placeholder="manager@example.com">
+                                @error('manager_email')
+                                    <span class="text-danger small">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" wire:model.defer="manager_password">
+                                @error('manager_password')
+                                    <span class="text-danger small">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="text-muted small">
+                                Discounts are restricted. An admin or super-admin must authorize.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary"
+                                wire:click="closeDiscountAuthModal">Cancel</button>
+                            <button type="button" class="btn btn-primary" wire:click="authorizeDiscount">
+                                <i class="fas fa-check me-1"></i>Authorize
                             </button>
                         </div>
                     </div>

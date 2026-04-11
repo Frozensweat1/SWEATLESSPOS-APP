@@ -15,6 +15,9 @@ class SaleDetail extends Model
         'quantity',
         'price_per_unit',
         'subtotal',
+        'discount_type',
+        'discount_value',
+        'discount_amount',
         'is_refunded'
     ];
 

@@ -50,15 +50,48 @@ class Customer extends Model
         return $this->name;
     }
 
-    // Mutator for phone number formatting
-    public function setPhoneAttribute($value)
+    // Query Scopes
+    public function scopeWhereStore($query, $storeId)
     {
-        $this->attributes['phone'] = preg_replace('/[^0-9]/', '', $value);
+        return $query->where('store_id', $storeId);
     }
 
-    // Scope for active customers
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
+    }
+
+    public function scopeInactive($query)
+    {
+        return $query->where('status', 'inactive');
+    }
+
+    public function scopeWithDebt($query)
+    {
+        return $query->whereHas('sales', function ($sale) {
+            $sale->where('payment_status', '!=', 'paid');
+        });
+    }
+
+    public function scopeByEmail($query, $email)
+    {
+        return $query->where('email', $email);
+    }
+
+    public function scopeByPhone($query, $phone)
+    {
+        return $query->where('phone', $phone);
+    }
+
+    public function scopeSearch($query, $searchTerm)
+    {
+        return $query->where('name', 'like', "%{$searchTerm}%")
+            ->orWhere('email', 'like', "%{$searchTerm}%")
+            ->orWhere('phone', 'like', "%{$searchTerm}%");
+    }
+
+    public function setPhoneAttribute($value)
+    {
+        $this->attributes['phone'] = preg_replace('/[^0-9]/', '', $value);
     }
 }

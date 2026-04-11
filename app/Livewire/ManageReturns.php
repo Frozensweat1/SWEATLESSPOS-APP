@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Refund;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\RefundService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Traits\StoreScoped;
@@ -16,7 +17,6 @@ use Illuminate\Support\Carbon;
 use Spatie\Permission\Models\Role;
 use Livewire\Attributes\Layout;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
-use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
 class ManageReturns extends Component
@@ -34,12 +34,24 @@ class ManageReturns extends Component
         'end_date' => null,
     ];
 
+    protected ?RefundService $refundService = null;
+
     public function mount()
     {
         $this->initStoreId();
+        $this->refundService = app(RefundService::class);
         $this->products = Product::where('store_id', $this->getStoreId())->get();
         $this->users = User::role(['admin', 'super-admin'])->get();
     }
+
+    protected function getRefundService(): RefundService
+    {
+        if ($this->refundService === null) {
+            $this->refundService = app(RefundService::class);
+        }
+        return $this->refundService;
+    }
+
     public function confirmBulkDelete()
     {
         if (count($this->selectedRefunds) > 0) {
@@ -59,14 +71,25 @@ class ManageReturns extends Component
     }
     public function bulkDeleteProducts()
     {
-        Product::whereIn('id', $this->selectedRefunds)->delete();
-        $this->selectedRefunds = []; // Clear selected products
-        LivewireAlert::title('Success')
-            ->text('Selected refunds deleted successfully.')
-            ->success()
-            ->toast()
-            ->position('top-end')
-            ->show();
+        try {
+            foreach ($this->selectedRefunds as $refundId) {
+                $this->getRefundService()->cancelRefund($this->getStoreId(), $refundId);
+            }
+            $this->selectedRefunds = [];
+            LivewireAlert::title('Success')
+                ->text('Selected refunds deleted successfully.')
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
+        } catch (\Exception $e) {
+            LivewireAlert::title('Error')
+                ->text($e->getMessage() ?: 'Failed to delete refunds.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
+        }
     }
 
     public function updatedSelectAll($value)
@@ -80,22 +103,7 @@ class ManageReturns extends Component
     }
     public function getRefundsProperty()
     {
-        $query = Refund::where('store_id', $this->getStoreId())->with(['product', 'user'])
-            ->when($this->filters['product_id'], function ($q) {
-                $q->where('product_id', $this->filters['product_id']);
-            })
-            ->when($this->filters['user_id'], function ($q) {
-                $q->where('user_id', $this->filters['user_id']);
-            })
-            ->when($this->filters['start_date'], function ($q) {
-                $q->where('created_at', '>=', Carbon::parse($this->filters['start_date'])->startOfDay());
-            })
-            ->when($this->filters['end_date'], function ($q) {
-                $q->where('created_at', '<=', Carbon::parse($this->filters['end_date'])->endOfDay());
-            })
-            ->orderBy('created_at', 'desc');
-
-        return $query->paginate(10);
+        return $this->getRefundService()->getRefunds($this->getStoreId(), $this->filters, 10);
     }
 
     public function render()

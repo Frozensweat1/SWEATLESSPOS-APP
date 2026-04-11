@@ -24,6 +24,20 @@
             @enderror
         </div>
         <div class="mb-3">
+            <label class="form-label" for="basic-form-payment">Payment Method</label>
+            <select class="form-select @error('payment_method')is-invalid @enderror" id="basic-form-payment"
+                wire:model.defer="payment_method">
+                <option value="" disabled>Select Payment Method...</option>
+                <option value="cash">Cash</option>
+                <option value="credit_card">Credit Card</option>
+                <option value="mobile_money">Mobile Money</option>
+                <option value="bank_transfer">Bank Transfer</option>
+            </select>
+            @error('payment_method')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </div>
+        <div class="mb-3">
             <label class="form-label" for="basic-form-email">Expense Category</label>
             <select class="form-select @error('category')is-invalid @enderror" id="inputState"
                 wire:model.defer="category">

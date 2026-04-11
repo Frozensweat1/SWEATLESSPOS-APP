@@ -11,6 +11,10 @@ class Sale extends Model
     protected $fillable = [
         'customer_id',
         'total_amount',
+        'discount_type',
+        'discount_value',
+        'discount_amount',
+        'total_discount',
         'payment_method',
         'payment_status',
         'amount_paid',
@@ -42,5 +46,62 @@ class Sale extends Model
     public function saleDetails()
     {
         return $this->hasMany(SaleDetail::class);
+    }
+
+    // Query Scopes
+    public function scopeWhereStore($query, $storeId)
+    {
+        return $query->where('store_id', $storeId);
+    }
+
+    public function scopeRecent($query, $days = 30)
+    {
+        return $query->where('created_at', '>=', now()->subDays($days));
+    }
+
+    public function scopePaid($query)
+    {
+        return $query->where('payment_status', 'paid');
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('payment_status', 'pending');
+    }
+
+    public function scopePartial($query)
+    {
+        return $query->where('payment_status', 'partial');
+    }
+
+    public function scopeCash($query)
+    {
+        return $query->where('payment_method', 'cash');
+    }
+
+    public function scopeCredit($query)
+    {
+        return $query->where('payment_method', 'credit');
+    }
+
+    public function scopeWithCustomer($query)
+    {
+        return $query->with(['customer', 'saleDetails.product']);
+    }
+
+    public function scopeByPaymentMethod($query, $paymentMethod)
+    {
+        return $query->where('payment_method', $paymentMethod);
+    }
+
+    public function scopeByPaymentStatus($query, $paymentStatus)
+    {
+        return $query->where('payment_status', $paymentStatus);
+    }
+
+    public function scopeBetweenDates($query, $startDate, $endDate)
+    {
+        return $query->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate);
     }
 }

@@ -50,6 +50,53 @@ class Product extends Model
     {
         return $this->belongsTo(Supplier::class);
     }
+
+    // Query Scopes
+    public function scopeWhereStore($query, $storeId)
+    {
+        return $query->where('store_id', $storeId);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('stock_quantity', '>', 0);
+    }
+
+    public function scopeLowStock($query, $threshold = 10)
+    {
+        return $query->where('stock_quantity', '<=', $threshold);
+    }
+
+    public function scopeByCategory($query, $categoryId)
+    {
+        return $query->where('category_id', $categoryId);
+    }
+
+    public function scopeBySupplier($query, $supplierId)
+    {
+        return $query->where('supplier_id', $supplierId);
+    }
+
+    public function scopeByBarcode($query, $barcode)
+    {
+        return $query->where('barcode', $barcode);
+    }
+
+    public function scopeExpired($query)
+    {
+        return $query->where('expiry_date', '<', now());
+    }
+
+    public function scopeExpiringSoon($query, $days = 30)
+    {
+        return $query->whereBetween('expiry_date', [now(), now()->addDays($days)]);
+    }
+
+    public function stockAdjustments()
+    {
+        return $this->hasMany(StockAdjustment::class);
+    }
+
     protected $casts = [
         'expiry_date' => 'date',
         'manufacture_date' => 'date',
@@ -57,7 +104,6 @@ class Product extends Model
 
     public function getImageAttribute($image)
     {
-
         if (file_exists('storage/' . $image))
             return $image;
         else

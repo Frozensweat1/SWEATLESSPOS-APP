@@ -28,12 +28,16 @@ class Dashboard extends Component
     public $totalCostOfGoods;
     public $grossProfit;
     public $netProfit;
+    public $componentName;
+    public $pageTitle;
     public $fromDate;
     public $toDate;
 
     public function mount()
     {
         $this->initStoreId();
+        $this->componentName = 'Dashboard';
+        $this->pageTitle = 'Overview';
         $today = Carbon::today()->toDateString();
         $this->fromDate = $today;
         $this->toDate = $today;

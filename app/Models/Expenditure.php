@@ -16,6 +16,7 @@ class Expenditure extends Model
     protected $fillable = [
         'description',
         'amount',
+        'payment_method',
         'category',
         'expenditure_date',
         'store_id',

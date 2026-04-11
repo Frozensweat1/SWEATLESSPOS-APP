@@ -15,23 +15,24 @@
             </button>
         </div>
         <a class="navbar-brand d-none d-md-flex align-items-center ms-2" href="{{ route('dashboard') }}">
-            <div class="d-flex align-items-center w-100">
+            <div class="d-flex align-items-center w-100 mt-3">
                 <img class="navbar-logo" src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}"
                     alt="{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}"
                     style="height: 36px; width: auto; object-fit: contain;" />
                 <div class="ms-2 d-flex flex-column justify-content-center">
                     <span class="font-sans-serif fw-bold text-dark"
                         style="font-size: 15px; line-height: 1.2;">{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}</span>
-                    <small class="text-muted" style="font-size: 11px;">Management System</small>
                 </div>
             </div>
         </a>
     </div>
     <div class="collapse navbar-collapse" id="navbarVerticalCollapse">
         <div class="px-3 py-2 navbar-vertical-content scrollbar px-xl-0">
-            @role('super-admin')
+            @role('super-admin|admin')
                 @php
-                    $stores = \App\Models\Store::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+                    $stores = \App\Models\Store::where('is_active', true)
+                        ->orderBy('name')
+                        ->get(['id', 'name']);
                     $currentStoreId = session('current_store_id') ?? auth()->user()?->store_id;
                 @endphp
                 <div class="mb-3 px-2">
@@ -51,6 +52,19 @@
                         </select>
                     </form>
                 </div>
+            @endrole
+            @role('cashier')
+                @php
+                    $assignedStoreName = auth()->user()?->store?->name;
+                @endphp
+                @if ($assignedStoreName)
+                    <div class="mb-3 px-2">
+                        <div class="form-label text-uppercase text-600 fw-bold mb-1" style="font-size: 10px;">
+                            Active Store
+                        </div>
+                        <div class="small text-muted">{{ $assignedStoreName }}</div>
+                    </div>
+                @endif
             @endrole
 
             <ul class="mb-3 navbar-nav flex-column" id="navbarVerticalNav">
@@ -163,7 +177,7 @@
                     </li>
                     <!-- Product Management -->
                     <li class="nav-item">
-                        <a class="nav-link dropdown-indicator {{ Request::routeIs('manage.categories', 'manage-products') ? 'active' : '' }}"
+                        <a class="nav-link dropdown-indicator {{ Request::routeIs('manage.categories', 'manage-products', 'stock.adjustments', 'reorder.alerts', 'purchase.orders') ? 'active' : '' }}"
                             href="#products" role="button" data-bs-toggle="collapse" aria-expanded="false"
                             aria-controls="products">
                             <div class="d-flex align-items-center">
@@ -171,7 +185,7 @@
                                 <span class="nav-link-text ps-1">Product Management</span>
                             </div>
                         </a>
-                        <ul class="nav collapse {{ Request::routeIs('manage.categories', 'manage-products') ? 'show' : '' }}"
+                        <ul class="nav collapse {{ Request::routeIs('manage.categories', 'manage-products', 'stock.adjustments', 'reorder.alerts', 'purchase.orders') ? 'show' : '' }}"
                             id="products">
                             <li class="nav-item">
                                 <a class="nav-link {{ Request::routeIs('manage.categories') ? 'active' : '' }}"
@@ -189,13 +203,37 @@
                                     </div>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('stock.adjustments') ? 'active' : '' }}"
+                                    href="{{ route('stock.adjustments') }}">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-text ps-1">Stock Adjustments</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('reorder.alerts') ? 'active' : '' }}"
+                                    href="{{ route('reorder.alerts') }}">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-text ps-1">Reorder Alerts</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('purchase.orders') ? 'active' : '' }}"
+                                    href="{{ route('purchase.orders') }}">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-text ps-1">Purchase Orders</span>
+                                    </div>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 @endrole
 
                 <!-- Sales/Transactions Section (Cashier and Above) -->
                 @role('super-admin|admin|cashier')
-                    <a class="nav-link dropdown-indicator {{ Request::routeIs('manage.sales', 'make.sales', 'manage.expenditure', 'manage.returns') ? 'active' : '' }}"
+                    <a class="nav-link dropdown-indicator {{ Request::routeIs('manage.sales', 'make.sales', 'manage.expenditure', 'manage.returns', 'cash.drawer') ? 'active' : '' }}"
                         href="#sales" role="button" data-bs-toggle="collapse" aria-expanded="false"
                         aria-controls="sales">
                         <div class="d-flex align-items-center">
@@ -203,7 +241,7 @@
                             <span class="nav-link-text ps-1">Sales/Transactions</span>
                         </div>
                     </a>
-                    <ul class="nav collapse {{ Request::routeIs('manage.sales', 'make.sales', 'manage.expenditure', 'manage.returns') ? 'show' : '' }}"
+                    <ul class="nav collapse {{ Request::routeIs('manage.sales', 'make.sales', 'manage.expenditure', 'manage.returns', 'cash.drawer') ? 'show' : '' }}"
                         id="sales">
                         <li class="nav-item">
                             <a class="nav-link dropdown-indicator {{ Request::routeIs('manage.sales', 'make.sales') ? 'active' : '' }}"
@@ -237,6 +275,14 @@
                                 href="{{ route('manage.expenditure') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-text ps-1">Expenses</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::routeIs('cash.drawer') ? 'active' : '' }}"
+                                href="{{ route('cash.drawer') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-text ps-1">Cash Drawer</span>
                                 </div>
                             </a>
                         </li>

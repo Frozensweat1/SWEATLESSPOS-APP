@@ -15,7 +15,8 @@ class Refund extends Model
         'quantity',
         'refund_amount',
         'reason',
-        'user_id'
+        'user_id',
+        'store_id',
     ];
 
     // A Return belongs to a Sale
@@ -40,5 +41,42 @@ class Refund extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // Query Scopes
+    public function scopeWhereStore($query, $storeId)
+    {
+        return $query->where('store_id', $storeId);
+    }
+
+    public function scopeRecent($query, $days = 30)
+    {
+        return $query->where('created_at', '>=', now()->subDays($days));
+    }
+
+    public function scopeByProduct($query, $productId)
+    {
+        return $query->where('product_id', $productId);
+    }
+
+    public function scopeByUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    public function scopeBySale($query, $saleId)
+    {
+        return $query->where('sale_id', $saleId);
+    }
+
+    public function scopeByReason($query, $reason)
+    {
+        return $query->where('reason', 'like', "%{$reason}%");
+    }
+
+    public function scopeBetweenDates($query, $startDate, $endDate)
+    {
+        return $query->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate);
     }
 }

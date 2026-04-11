@@ -58,6 +58,7 @@
                         <tr>
                             <th>Description</th>
                             <th>Amount</th>
+                            <th>Payment</th>
                             <th>Category</th>
                             <th>Date</th>
                             <th>Supplier</th>
@@ -70,6 +71,7 @@
                             <tr class="btn-reveal-trigger">
                                 <td>{{ $expenditure->description }}</td>
                                 <td>{{ $expenditure->amount }}</td>
+                                <td>{{ ucfirst(str_replace('_', ' ', $expenditure->payment_method ?? 'cash')) }}</td>
                                 <td>{{ $expenditure->category }}</td>
                                 <td>{{ $expenditure->expenditure_date->format('Y-m-d') }}</td>
                                 <td>{{ $expenditure->supplier?->name ?? 'N/A' }}</td>
@@ -96,7 +98,7 @@
 
                         @empty
                             <tr>
-                                <td colspan="10">
+                                <td colspan="11">
                                     <div class="alert alert-info text-center" role="alert">No record found!</div>
                                 </td>
                             </tr>
