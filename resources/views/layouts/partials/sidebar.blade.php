@@ -307,7 +307,7 @@
 
                 <!-- Reports Section -->
                 @role(['super-admin', 'admin', 'cashier'])
-                    <a class="nav-link dropdown-indicator {{ Request::routeIs('sale.report', 'inventory.report', 'customer.report', 'financial.report', 'manage.debtors') ? 'active' : '' }}"
+                    <a class="nav-link dropdown-indicator {{ Request::routeIs('sale.report', 'inventory.report', 'customer.report', 'financial.report', 'daily.sales.summary', 'product.performance', 'staff.performance', 'category.performance', 'expenditure.report', 'customerreport.detail') ? 'active' : '' }}"
                         href="#reports" role="button" data-bs-toggle="collapse" aria-expanded="false"
                         aria-controls="reports">
                         <div class="d-flex align-items-center">
@@ -315,7 +315,7 @@
                             <span class="nav-link-text ps-1">Reports</span>
                         </div>
                     </a>
-                    <ul class="nav collapse {{ Request::routeIs('sale.report', 'inventory.report', 'customer.report', 'financial.report', 'customerreport.detail', 'manage.debtors') ? 'show' : '' }}"
+                    <ul class="nav collapse {{ Request::routeIs('sale.report', 'inventory.report', 'customer.report', 'financial.report', 'daily.sales.summary', 'product.performance', 'staff.performance', 'category.performance', 'expenditure.report', 'customerreport.detail') ? 'show' : '' }}"
                         id="reports">
                         <li class="nav-item">
                             <a class="nav-link {{ Request::routeIs('sale.report') ? 'active' : '' }}"
@@ -334,18 +334,59 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ Request::routeIs('customer.report') ? 'active' : '' }}"
-                                href="{{ route('customer.report') }}">
-                                <div class="d-flex align-items-center">
-                                    <span class="nav-link-text ps-1">Customer Report</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link {{ Request::routeIs('financial.report') ? 'active' : '' }}"
                                 href="{{ route('financial.report') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-text ps-1">Financial Report</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::routeIs('daily.sales.summary') ? 'active' : '' }}"
+                                href="{{ route('daily.sales.summary') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-text ps-1">Daily Sales Summary</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::routeIs('product.performance') ? 'active' : '' }}"
+                                href="{{ route('product.performance') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-text ps-1">Product Performance</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::routeIs('staff.performance') ? 'active' : '' }}"
+                                href="{{ route('staff.performance') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-text ps-1">Staff Performance</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::routeIs('category.performance') ? 'active' : '' }}"
+                                href="{{ route('category.performance') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-text ps-1">Category Performance</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::routeIs('expenditure.report') ? 'active' : '' }}"
+                                href="{{ route('expenditure.report') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-text ps-1">Expenditure Report</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item border-top my-2"></li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::routeIs('customer.report') ? 'active' : '' }}"
+                                href="{{ route('customer.report') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-text ps-1">Customer Report</span>
                                 </div>
                             </a>
                         </li>
@@ -388,6 +429,91 @@
                                 <span class="nav-link-text ps-1">Settings</span>
                             </div>
                         </a>
+                    </li>
+
+                    <!-- Website Management Section -->
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-indicator {{ Request::routeIs('manage.website.pages', 'manage.gallery', 'manage.website.settings', 'manage.contact.submissions', 'manage.testimonials', 'manage.newsletter', 'analytics.dashboard', 'activity.logs') ? 'active' : '' }}"
+                            href="#website" role="button" data-bs-toggle="collapse" aria-expanded="false"
+                            aria-controls="website">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon"><span class="fas fa-globe"></span></span>
+                                <span class="nav-link-text ps-1">Website & Analytics</span>
+                            </div>
+                        </a>
+                        <ul class="nav collapse {{ Request::routeIs('manage.website.pages', 'manage.gallery', 'manage.website.settings', 'manage.contact.submissions', 'manage.testimonials', 'manage.newsletter', 'analytics.dashboard', 'activity.logs') ? 'show' : '' }}"
+                            id="website">
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('manage.website.pages') ? 'active' : '' }}"
+                                    href="{{ route('manage.website.pages') }}">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-text ps-1">Manage Pages</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('manage.gallery') ? 'active' : '' }}"
+                                    href="{{ route('manage.gallery') }}">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-text ps-1">Manage Gallery</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('manage.website.settings') ? 'active' : '' }}"
+                                    href="{{ route('manage.website.settings') }}">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-text ps-1">Website Settings</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item border-top my-2"></li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('manage.contact.submissions') ? 'active' : '' }}"
+                                    href="{{ route('manage.contact.submissions') }}">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-envelope fa-sm me-2"></i>
+                                        <span class="nav-link-text ps-1">Contact Submissions</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('manage.testimonials') ? 'active' : '' }}"
+                                    href="{{ route('manage.testimonials') }}">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-star fa-sm me-2"></i>
+                                        <span class="nav-link-text ps-1">Testimonials</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('manage.newsletter') ? 'active' : '' }}"
+                                    href="{{ route('manage.newsletter') }}">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-newspaper fa-sm me-2"></i>
+                                        <span class="nav-link-text ps-1">Newsletter</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('analytics.dashboard') ? 'active' : '' }}"
+                                    href="{{ route('analytics.dashboard') }}">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-chart-line fa-sm me-2"></i>
+                                        <span class="nav-link-text ps-1">Analytics</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('activity.logs') ? 'active' : '' }}"
+                                    href="{{ route('activity.logs') }}">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-history fa-sm me-2"></i>
+                                        <span class="nav-link-text ps-1">Activity Logs</span>
+                                    </div>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 @endrole
 

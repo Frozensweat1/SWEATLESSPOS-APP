@@ -22,7 +22,8 @@ class Product extends Model
         'manufacture_date',
         'expiry_date',
         'image',
-        'store_id'
+        'store_id',
+        'is_active',
     ];
 
     // Example method to auto-generate SKU if not provided

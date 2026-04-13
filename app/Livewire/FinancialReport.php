@@ -33,52 +33,113 @@ class FinancialReport extends Component
         $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
     }
 
+    public function getSalesBaseQuery()
+    {
+        return Sale::where('store_id', $this->getStoreId())
+            ->whereBetween('created_at', [$this->startDate, $this->endDate])
+            ->when($this->userId, fn($q) => $q->where('user_id', $this->userId));
+    }
+
+    public function getExpendituresBaseQuery()
+    {
+        return Expenditure::where('store_id', $this->getStoreId())
+            ->whereBetween('expenditure_date', [$this->startDate, $this->endDate])
+            ->when($this->userId, fn($q) => $q->where('user_id', $this->userId));
+    }
+
+    public function getTotalSalesProperty()
+    {
+        return SaleDetail::whereHas('sale', fn($q) => $q->where('store_id', $this->getStoreId())
+            ->whereBetween('created_at', [$this->startDate, $this->endDate])
+            ->when($this->userId, fn($q) => $q->where('user_id', $this->userId)))
+            ->where('is_refunded', false)
+            ->sum('subtotal');
+    }
+
+    public function getTotalExpendituresProperty()
+    {
+        return $this->getExpendituresBaseQuery()->sum('amount');
+    }
+
+    public function getTotalRefundedProperty()
+    {
+        return SaleDetail::whereHas('sale', fn($q) => $q->where('store_id', $this->getStoreId())
+            ->whereBetween('created_at', [$this->startDate, $this->endDate])
+            ->when($this->userId, fn($q) => $q->where('user_id', $this->userId)))
+            ->where('is_refunded', true)
+            ->sum('subtotal');
+    }
+
+    public function getTotalCostProperty()
+    {
+        return SaleDetail::whereHas('sale', fn($q) => $q->where('store_id', $this->getStoreId())
+            ->whereBetween('created_at', [$this->startDate, $this->endDate])
+            ->when($this->userId, fn($q) => $q->where('user_id', $this->userId)))
+            ->where('is_refunded', false)
+            ->join('products', 'sale_details.product_id', '=', 'products.id')
+            ->sum(DB::raw('sale_details.quantity * products.cost_price'));
+    }
+
+    public function getNetProfitProperty()
+    {
+        return $this->totalSales - $this->totalExpenditures - $this->totalCost;
+    }
+
+    public function getGrossMarginProperty()
+    {
+        if ($this->totalSales > 0) {
+            return (($this->totalSales - $this->totalCost) / $this->totalSales) * 100;
+        }
+        return 0;
+    }
+
+    public function getAverageTransactionProperty()
+    {
+        $count = $this->getSalesBaseQuery()->count();
+        return $count > 0 ? $this->totalSales / $count : 0;
+    }
+
+    public function getSalesByPaymentMethodProperty()
+    {
+        return $this->getSalesBaseQuery()
+            ->select('payment_method', DB::raw('SUM(total_amount) as total'))
+            ->groupBy('payment_method')
+            ->get();
+    }
+
+    public function getTotalInventoryValueProperty()
+    {
+        return Product::where('store_id', $this->getStoreId())
+            ->selectRaw('COALESCE(SUM(stock_quantity * price), 0) as total_inventory_value')
+            ->value('total_inventory_value');
+    }
+
+    public function getTotalInventoryCostProperty()
+    {
+        return Product::where('store_id', $this->getStoreId())
+            ->selectRaw('COALESCE(SUM(stock_quantity * cost_price), 0) as total_inventory_cost')
+            ->value('total_inventory_cost');
+    }
+
     public function render()
     {
-        // Query sales with non-refunded SaleDetails only
-        $salesQuery = Sale::where('store_id', $this->getStoreId())
-            ->with(['saleDetails' => function ($query) {
-                $query->where('is_refunded', false);
-            }]);
-
-        $expendituresQuery = Expenditure::where('store_id', $this->getStoreId());
-
-        if ($this->startDate && $this->endDate) {
-            $salesQuery->whereBetween('created_at', [$this->startDate, $this->endDate]);
-            $expendituresQuery->whereBetween('expenditure_date', [$this->startDate, $this->endDate]);
-        }
-
-        if ($this->userId) {
-            $salesQuery->where('user_id', $this->userId);
-            $expendituresQuery->where('user_id', $this->userId);
-        }
-
-        // Calculate total sales by summing non-refunded SaleDetail subtotals
-        $totalSales = $salesQuery->get()->reduce(function ($total, $sale) {
-            return $total + $sale->saleDetails->sum('subtotal');
-        }, 0);
-
-        // Calculate total expenditures
-        $totalExpenditures = $expendituresQuery->sum('amount');
-
-        // Paginate sales and expenditures
-        $sales = $salesQuery->paginate($this->perPage);
-        $expenditures = $expendituresQuery->paginate($this->perPage);
-
-        // Calculate total inventory value: Sum of (stock_quantity * price) for all products in this store.
-        $totalInventoryValue = Product::where('store_id', $this->getStoreId())
-            ->select(DB::raw('SUM(stock_quantity * price) as total_inventory_value'))
-            ->value('total_inventory_value');
-
-        // Fetch users with specific roles using Spatie
+        $sales = $this->getSalesBaseQuery()->with(['user', 'customer'])->paginate($this->perPage);
+        $expenditures = $this->getExpendituresBaseQuery()->with(['user'])->paginate($this->perPage);
         $users = User::role(['super-admin', 'admin', 'cashier'])->get();
 
         return view('livewire.financial-report', [
             'sales' => $sales,
             'expenditures' => $expenditures,
-            'totalSales' => $totalSales,
-            'totalExpenditures' => $totalExpenditures,
-            'totalInventoryValue' => $totalInventoryValue,
+            'totalSales' => $this->totalSales,
+            'totalExpenditures' => $this->totalExpenditures,
+            'totalRefunded' => $this->totalRefunded,
+            'totalCost' => $this->totalCost,
+            'netProfit' => $this->netProfit,
+            'grossMargin' => $this->grossMargin,
+            'averageTransaction' => $this->averageTransaction,
+            'salesByPaymentMethod' => $this->salesByPaymentMethod,
+            'totalInventoryValue' => $this->totalInventoryValue,
+            'totalInventoryCost' => $this->totalInventoryCost,
             'users' => $users,
         ]);
     }

@@ -1,64 +1,101 @@
 <div>
     <div class="container mt-4">
-        <!-- Filters Card -->
         <div class="card mb-4">
             <div class="card-body">
-                <h5 class="card-title">Filters</h5>
-                <div class="row g-2 align-items-center">
-                    <!-- Search -->
-                    <div class="col-md-6">
-                        <input type="text" class="form-control" placeholder="Search by customer name..."
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" placeholder="Search by name, email, phone..."
                             wire:model.live="search">
                     </div>
-
-                    <!-- Sort Options -->
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <select class="form-select" wire:model.live="sortField">
-                            <option value="total_amount">Sort by Total Purchase Amount</option>
-                            <option value="created_at">Sort by Recent Purchase Date</option>
+                            <option value="total_spent">Sort by Total Spent</option>
+                            <option value="total_orders">Sort by Orders</option>
+                            <option value="created_at">Sort by Date</option>
                         </select>
+                    </div>
+                    <div class="col-md-5 text-end">
+                        <button class="btn btn-falcon-primary btn-sm" wire:click="export('csv')">
+                            <span class="fas fa-file-csv me-1"></span> CSV
+                        </button>
+                        <button class="btn btn-falcon-success btn-sm" wire:click="export('xlsx')">
+                            <span class="fas fa-file-excel me-1"></span> Excel
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Customer Table -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6>Total Customers</h6>
+                        <h4 class="mb-0">{{ number_format($stats['totalCustomers']) }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6>Total Revenue</h6>
+                        <h4 class="mb-0">Ghs {{ number_format($stats['totalRevenue'], 2) }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6>Avg Customer Value</h6>
+                        <h4 class="mb-0">Ghs {{ number_format($stats['avgCustomerValue'], 2) }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
-                <h5>Customer Report Summary</h5>
+                <h5>Customer Report</h5>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover table-striped">
                     <thead>
                         <tr>
-                            <th>Customer Name</th>
-                            <th>Total Purchase Amount</th>
-                            <th>Total Purchases</th>
-                            <th>Last Purchase Date</th>
+                            <th>Customer</th>
+                            <th>Tier</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                            <th>Avg Order</th>
+                            <th>Last Purchase</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($customers as $customer)
+                        @forelse($customers as $item)
                             <tr>
                                 <td>
-                                    <a href="{{ route('customerreport.detail', $customer->id) }}">
-                                        {{ $customer->name }}
+                                    <a href="{{ route('customerreport.detail', $item->customer->id) }}">
+                                        {{ $item->customer->name }}
                                     </a>
+                                    <br><small class="text-muted">{{ $item->customer->email }}</small>
                                 </td>
-                                <td>GHS {{ number_format($customer->sales->sum('total_amount'), 2) }}</td>
-                                <td>{{ $customer->sales->count() }}</td>
-                                <td>{{ $customer->sales->last()?->created_at ? $customer->sales->last()->created_at->format('Y-m-d') : 'N/A' }}
+                                <td>
+                                    <span class="badge bg-{{ $item->tier == 'VIP' ? 'warning' : ($item->tier == 'Premium' ? 'info' : ($item->tier == 'Regular' ? 'success' : 'secondary')) }}">
+                                        {{ $item->tier }}
+                                    </span>
                                 </td>
+                                <td>{{ $item->totalOrders }}</td>
+                                <td>Ghs {{ number_format($item->totalSpent, 2) }}</td>
+                                <td>Ghs {{ number_format($item->avgOrderValue, 2) }}</td>
+                                <td>{{ $item->lastPurchase?->format('Y-m-d') ?? 'N/A' }}</td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr><td colspan="6" class="text-center">No customers found</td></tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
-
-            <!-- Pagination -->
             <div class="card-footer d-flex justify-content-between">
-                <span>Showing {{ $customers->firstItem() }} to {{ $customers->lastItem() }} of {{ $customers->total() }}
-                    customers</span>
+                <span class="text-muted">Showing {{ $customers->firstItem() ?? 0 }} - {{ $customers->lastItem() ?? 0 }} of {{ $customers->total() }} customers</span>
                 {{ $customers->links() }}
             </div>
         </div>

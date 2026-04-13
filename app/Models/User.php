@@ -54,6 +54,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Expenditure::class);
     }
+
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
     protected $appends = [
         'profile_photo_url',
     ];

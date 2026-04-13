@@ -26,10 +26,30 @@ use App\Livewire\ManageUser;
 use App\Livewire\Notifications;
 use App\Livewire\Settings;
 use App\Livewire\SystemLogs;
+use App\Livewire\Admin\ManageWebsitePages;
+use App\Livewire\Admin\ManageGallery;
+use App\Livewire\Admin\ManageWebsiteSettings;
 use App\Helpers\StoreHelper;
+use App\Livewire\Website\Home;
+use App\Livewire\Website\About;
+use App\Livewire\Website\Products;
+use App\Livewire\Website\ProductDetail;
+use App\Livewire\Website\Gallery;
+use App\Livewire\Website\Contact;
+use App\Livewire\Website\Testimonials;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
+// Public Website Routes
+Route::get('/', Home::class)->name('website.home');
+Route::get('/about', About::class)->name('website.about');
+Route::get('/products', Products::class)->name('website.products');
+Route::get('/product/{id}', ProductDetail::class)->name('website.product-detail');
+Route::get('/testimonials', Testimonials::class)->name('website.testimonials');
+Route::get('/gallery', Gallery::class)->name('website.gallery');
+Route::get('/contact', Contact::class)->name('website.contact');
+
+// Legacy home route redirect
+Route::get('/welcome', function () {
     return view('welcome');
 })->name('home');
 
@@ -63,6 +83,18 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/manage-roles', ManageRoles::class)->name('manage.roles');
         Route::get('/system-notifications', Notifications::class)->name('manage.notifications');
         Route::get('/system-logs', SystemLogs::class)->name('system.logs');
+
+        // Website Management Routes
+        Route::get('/manage-website-pages', ManageWebsitePages::class)->name('manage.website.pages');
+        Route::get('/manage-gallery', ManageGallery::class)->name('manage.gallery');
+        Route::get('/manage-website-settings', ManageWebsiteSettings::class)->name('manage.website.settings');
+
+        // New Features Routes
+        Route::get('/manage-contact-submissions', \App\Livewire\Admin\ManageContactFormSubmissions::class)->name('manage.contact.submissions');
+        Route::get('/manage-testimonials', \App\Livewire\Admin\ManageTestimonials::class)->name('manage.testimonials');
+        Route::get('/manage-newsletter', \App\Livewire\Admin\ManageNewsletterSubscribers::class)->name('manage.newsletter');
+        Route::get('/analytics', \App\Livewire\Admin\AnalyticsDashboard::class)->name('analytics.dashboard');
+        Route::get('/activity-logs', \App\Livewire\Admin\ActivityLogViewer::class)->name('activity.logs');
     });
 
     // Routes accessible by Admin and Super-Admin
@@ -81,6 +113,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/sale-report', SaleReport::class)->name('sale.report');
         Route::get('/inventory-report', InventoryReport::class)->name('inventory.report');
         Route::get('/financial-report', FinancialReport::class)->name('financial.report');
+        Route::get('/daily-sales-summary', \App\Livewire\DailySalesSummary::class)->name('daily.sales.summary');
+        Route::get('/product-performance', \App\Livewire\ProductPerformance::class)->name('product.performance');
+        Route::get('/staff-performance', \App\Livewire\StaffPerformance::class)->name('staff.performance');
+        Route::get('/category-performance', \App\Livewire\CategoryPerformance::class)->name('category.performance');
+        Route::get('/expenditure-report', \App\Livewire\ExpenditureReport::class)->name('expenditure.report');
     });
 
     // Routes accessible by Cashier, Admin, and Super-Admin

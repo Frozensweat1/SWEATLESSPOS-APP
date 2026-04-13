@@ -14,6 +14,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Writer\Pdf\Mpdf;
 use Livewire\Attributes\Layout;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
 class SaleReport extends Component
@@ -30,36 +31,69 @@ class SaleReport extends Component
     {
         $this->initStoreId();
         $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = Carbon::now()->format('Y-m-d');
+        $this->endDate = Carbon::now()->endOfDay()->format('Y-m-d H:i:s');
+    }
+
+    public function getSalesQuery()
+    {
+        return Sale::where('store_id', $this->getStoreId())
+            ->with(['saleDetails' => function ($query) {
+                $query->where('is_refunded', false);
+            }, 'saleDetails.product', 'customer', 'user'])
+            ->where('created_at', '>=', $this->startDate)
+            ->where('created_at', '<=', $this->endDate);
     }
 
     public function getSalesProperty()
     {
-        $query = Sale::where('store_id', $this->getStoreId())
-            ->with(['saleDetails' => function ($query) {
-                $query->where('is_refunded', false);
-            }, 'saleDetails.product', 'customer', 'user'])
-            ->whereBetween('created_at', [$this->startDate, $this->endDate]);
+        return $this->getSalesQuery()->paginate($this->perPage);
+    }
 
-        if ($this->paymentMethod) {
-            $query->where('payment_method', $this->paymentMethod);
-        }
+    public function getSalesSummaryProperty()
+    {
+        $query = $this->getSalesQuery();
+        
+        $totalRevenue = SaleDetail::whereHas('sale', fn($q) => $q->where('store_id', $this->getStoreId())
+            ->where('created_at', '>=', $this->startDate)
+            ->where('created_at', '<=', $this->endDate)
+            ->when($this->paymentMethod, fn($q) => $q->where('payment_method', $this->paymentMethod)))
+            ->where('is_refunded', false)
+            ->sum('subtotal');
 
-        if ($this->searchTerm) {
-            $query->whereHas('customer', function ($q) {
-                $q->where('name', 'like', "%{$this->searchTerm}%");
-            });
-        }
+        $totalItems = SaleDetail::whereHas('sale', fn($q) => $q->where('store_id', $this->getStoreId())
+            ->where('created_at', '>=', $this->startDate)
+            ->where('created_at', '<=', $this->endDate)
+            ->when($this->paymentMethod, fn($q) => $q->where('payment_method', $this->paymentMethod)))
+            ->where('is_refunded', false)
+            ->sum('quantity');
 
-        return $query->paginate($this->perPage);
+        $transactionCount = $query->count();
+
+        return [
+            'totalRevenue' => $totalRevenue,
+            'totalItems' => $totalItems,
+            'transactionCount' => $transactionCount,
+            'averageOrder' => $transactionCount > 0 ? $totalRevenue / $transactionCount : 0,
+        ];
     }
 
     public function export($format)
     {
+        $query = $this->getSalesQuery();
+        
+        if ($this->searchTerm) {
+            $query->where(function ($q) {
+                $q->whereHas('customer', fn($sub) => $sub->where('name', 'like', "%{$this->searchTerm}%"))
+                  ->orWhere('id', 'like', "%{$this->searchTerm}%")
+                  ->orWhereHas('saleDetails.product', fn($sub) => $sub->where('name', 'like', "%{$this->searchTerm}%"));
+            });
+        }
+
+        $sales = $query->with(['saleDetails.product', 'customer', 'user'])->get();
+
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Set headers
         $sheet->setCellValue('A1', 'Sale ID');
         $sheet->setCellValue('B1', 'Customer');
         $sheet->setCellValue('C1', 'Product');
@@ -68,24 +102,25 @@ class SaleReport extends Component
         $sheet->setCellValue('F1', 'Total');
         $sheet->setCellValue('G1', 'Payment Method');
         $sheet->setCellValue('H1', 'Date');
+        $sheet->setCellValue('I1', 'Cashier');
 
-        // Fill data
         $row = 2;
-        foreach ($this->sales as $sale) {
+        foreach ($sales as $sale) {
             foreach ($sale->saleDetails as $detail) {
                 $sheet->setCellValue("A{$row}", $sale->id);
                 $sheet->setCellValue("B{$row}", $sale->customer ? $sale->customer->name : 'Guest');
-                $sheet->setCellValue("C{$row}", $detail->product->name);
+                $sheet->setCellValue("C{$row}", $detail->product->name ?? 'N/A');
                 $sheet->setCellValue("D{$row}", $detail->quantity);
                 $sheet->setCellValue("E{$row}", $detail->price_per_unit);
                 $sheet->setCellValue("F{$row}", $detail->subtotal);
                 $sheet->setCellValue("G{$row}", $sale->payment_method);
                 $sheet->setCellValue("H{$row}", $sale->created_at->format('Y-m-d'));
+                $sheet->setCellValue("I{$row}", $sale->user->name ?? 'N/A');
                 $row++;
             }
         }
 
-        $fileName = 'sales_report.' . $format;
+        $fileName = 'sales_report_' . date('Y-m-d') . '.' . $format;
         $filePath = storage_path('app/public/' . $fileName);
 
         if ($format === 'xlsx') {
@@ -104,6 +139,7 @@ class SaleReport extends Component
     {
         return view('livewire.sale-report', [
             'sales' => $this->sales,
+            'summary' => $this->salesSummary,
         ]);
     }
 }

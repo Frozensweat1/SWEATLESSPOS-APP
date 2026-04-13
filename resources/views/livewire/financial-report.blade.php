@@ -1,7 +1,5 @@
 <div>
-    {{-- Filter Form --}}
     <div class="container">
-        <!-- Filter Card -->
         <div class="card mb-4">
             <div class="card-header">
                 <h5>Financial Report Filters</h5>
@@ -26,39 +24,101 @@
                         </select>
                     </div>
                 </div>
-
             </div>
         </div>
 
-        <!-- Results Summary -->
         <div class="row mb-4">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card bg-success text-white">
                     <div class="card-body">
-                        <h5 class="card-title">Total Sales</h5>
-                        <p class="card-text">Ghs {{ number_format($totalSales, 2) }}</p>
+                        <h6 class="card-title">Total Sales</h6>
+                        <h4 class="mb-0">Ghs {{ number_format($totalSales, 2) }}</h4>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card bg-danger text-white">
                     <div class="card-body">
-                        <h5 class="card-title">Total Expenditures</h5>
-                        <p class="card-text">Ghs {{ number_format($totalExpenditures, 2) }}</p>
+                        <h6 class="card-title">Total Expenditures</h6>
+                        <h4 class="mb-0">Ghs {{ number_format($totalExpenditures, 2) }}</h4>
                     </div>
                 </div>
             </div>
-             <div class="col-md-4">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Total Inventory Value</h5>
-                    <p class="card-text">GH₵ {{ number_format($totalInventoryValue, 2) }}</p>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Refunded</h6>
+                        <h4 class="mb-0">Ghs {{ number_format($totalRefunded, 2) }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Inventory Value</h6>
+                        <h4 class="mb-0">GH₵ {{ number_format($totalInventoryValue, 2) }}</h4>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card border-primary">
+                    <div class="card-body">
+                        <h6 class="card-title text-primary">Net Profit</h6>
+                        <h4 class="mb-0 {{ $netProfit >= 0 ? 'text-success' : 'text-danger' }}">
+                            Ghs {{ number_format($netProfit, 2) }}
+                        </h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-primary">
+                    <div class="card-body">
+                        <h6 class="card-title text-primary">Gross Margin</h6>
+                        <h4 class="mb-0">{{ number_format($grossMargin, 1) }}%</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-primary">
+                    <div class="card-body">
+                        <h6 class="card-title text-primary">Avg Transaction</h6>
+                        <h4 class="mb-0">Ghs {{ number_format($averageTransaction, 2) }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-primary">
+                    <div class="card-body">
+                        <h6 class="card-title text-primary">Inventory Cost</h6>
+                        <h4 class="mb-0">Ghs {{ number_format($totalInventoryCost, 2) }}</h4>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Sales and Expenditures Table -->
+        @if($salesByPaymentMethod->count() > 0)
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Sales by Payment Method</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach($salesByPaymentMethod as $payment)
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted">{{ ucfirst($payment->payment_method) }}</h6>
+                            <h5>Ghs {{ number_format($payment->total, 2) }}</h5>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="card">
             <div class="card-header">
                 <h5>Sales and Expenditures Details</h5>
@@ -77,33 +137,34 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($sales as $sale)
+                            @forelse($sales as $sale)
                                 <tr>
                                     <td>{{ $sale->id }}</td>
-                                    <td>Sale</td>
+                                    <td><span class="badge bg-success">Sale</span></td>
                                     <td>Ghs {{ number_format($sale->total_amount, 2) }}</td>
-                                    <td>Sale Transaction</td>
+                                    <td>{{ $sale->customer?->name ?? 'Guest' }}</td>
                                     <td>{{ $sale->created_at->format('Y-m-d') }}</td>
                                     <td>{{ $sale->user->name ?? 'N/A' }}</td>
                                 </tr>
-                            @endforeach
-                            @foreach ($expenditures as $expenditure)
+                            @empty
+                                <tr><td colspan="6" class="text-center">No sales found</td></tr>
+                            @endforelse
+                            @forelse($expenditures as $expenditure)
                                 <tr>
                                     <td>{{ $expenditure->id }}</td>
-                                    <td>Expenditure</td>
+                                    <td><span class="badge bg-danger">Expenditure</span></td>
                                     <td>Ghs {{ number_format($expenditure->amount, 2) }}</td>
                                     <td>{{ $expenditure->description }}</td>
                                     <td>{{ $expenditure->expenditure_date->format('Y-m-d') }}</td>
                                     <td>{{ $expenditure->user->name ?? 'N/A' }}</td>
                                 </tr>
-                            @endforeach
+                            @empty
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
-
-                <!-- Single Pagination for Sales and Expenditures -->
                 <div class="d-flex justify-content-between mt-3">
-                    {{ $sales->links() }} <!-- This handles the sales pagination -->
+                    {{ $sales->links() }}
                 </div>
             </div>
         </div>

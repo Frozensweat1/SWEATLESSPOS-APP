@@ -136,7 +136,7 @@
                                                         <i class="fas fa-eye me-2"></i>View Receipt
                                                     </a>
                                                     <a class="dropdown-item text-info" href="javascript:void(0)"
-                                                        onclick="printSaleReceipt({{ $sale->id }})">
+                                                        onclick="printViewSaleReceipt()">
                                                         <i class="fas fa-print me-2"></i>Print Receipt
                                                     </a>
                                                     <hr class="my-1">
@@ -179,7 +179,6 @@
         @include('livewire.refund-formmodal')
     @endif
 
-    <!-- View Receipt Modal -->
     @if ($showViewReceipt && $viewingSale)
         <div class="modal fade show" id="viewReceiptModal" data-bs-keyboard="false" data-bs-backdrop="static"
             style="display: block;">
@@ -337,51 +336,57 @@
         </div>
         <div class="modal-backdrop fade show"></div>
     @endif
-</div>
 
-@push('js')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script>
-        function printViewSaleReceipt() {
-            var receiptContent = document.getElementById('viewSaleReceipt');
-            var printWindow = window.open('', '', 'width=800,height=600');
-            var htmlContent = '<!DOCTYPE html><html><head><title>Receipt</title><style>' +
-                'body { font-family: "Courier New", monospace; font-size: 12px; margin: 10px; padding: 0; } ' +
-                'table { width: 100%; border-collapse: collapse; } ' +
-                'th, td { padding: 3px; border: none; } ' +
-                'img { max-width: 100%; height: auto; } ' +
-                '@media print { body { margin: 0; padding: 0; } }' +
-                '</style></head><body>' + receiptContent.innerHTML + '</body></html>';
+    @once
+        @push('js')
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+        @endpush
+    @endonce
 
-            printWindow.document.write(htmlContent);
-            printWindow.document.close();
-            printWindow.focus();
+    @script
+        <script>
+            window.printViewSaleReceipt = function() {
+                var receiptContent = document.getElementById('viewSaleReceipt');
+                var printWindow = window.open('', '', 'width=800,height=600');
+                var htmlContent = '<!DOCTYPE html><html><head><title>Receipt</title><style>' +
+                    'body { font-family: "Courier New", monospace; font-size: 12px; margin: 10px; padding: 0; } ' +
+                    'table { width: 100%; border-collapse: collapse; } ' +
+                    'th, td { padding: 3px; border: none; } ' +
+                    'img { max-width: 100%; height: auto; } ' +
+                    '@media print { body { margin: 0; padding: 0; } }' +
+                    '</style></head><body>' + receiptContent.innerHTML + '</body></html>';
 
-            setTimeout(function() {
-                printWindow.print();
-                printWindow.close();
-            }, 250);
-        }
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+                printWindow.focus();
 
-        function downloadViewSaleReceipt() {
-            const element = document.getElementById('viewSaleReceipt');
-            const opt = {
-                margin: 5,
-                filename: 'receipt_sale.pdf',
-                image: {
-                    type: 'jpeg',
-                    quality: 0.98
-                },
-                html2canvas: {
-                    scale: 2
-                },
-                jsPDF: {
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                }
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
             };
-            html2pdf().set(opt).from(element).save();
-        }
-    </script>
-@endpush
+
+            window.downloadViewSaleReceipt = function() {
+                const element = document.getElementById('viewSaleReceipt');
+                const opt = {
+                    margin: 5,
+                    filename: 'receipt_sale.pdf',
+                    image: {
+                        type: 'jpeg',
+                        quality: 0.98
+                    },
+                    html2canvas: {
+                        scale: 2
+                    },
+                    jsPDF: {
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    }
+                };
+                html2pdf().set(opt).from(element).save();
+            };
+        </script>
+    @endscript
+
+</div>
