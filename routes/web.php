@@ -46,6 +46,7 @@ Route::get('/products', Products::class)->name('website.products');
 Route::get('/product/{id}', ProductDetail::class)->name('website.product-detail');
 Route::get('/testimonials', Testimonials::class)->name('website.testimonials');
 Route::get('/gallery', Gallery::class)->name('website.gallery');
+Route::get('/gallery/{slug}', \App\Livewire\Website\GalleryDetail::class)->name('website.gallery.detail');
 Route::get('/contact', Contact::class)->name('website.contact');
 
 // Legacy home route redirect
@@ -95,6 +96,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/manage-newsletter', \App\Livewire\Admin\ManageNewsletterSubscribers::class)->name('manage.newsletter');
         Route::get('/analytics', \App\Livewire\Admin\AnalyticsDashboard::class)->name('analytics.dashboard');
         Route::get('/activity-logs', \App\Livewire\Admin\ActivityLogViewer::class)->name('activity.logs');
+        Route::get('/inventory-transfers', \App\Livewire\ManageInventoryTransfers::class)->name('inventory.transfers');
     });
 
     // Routes accessible by Admin and Super-Admin

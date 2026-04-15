@@ -51,6 +51,25 @@
                                 <textarea wire:model="albumDescription" class="form-control" rows="3" placeholder="Album description"></textarea>
                             </div>
 
+                            <div class="mb-3">
+                                <label class="form-label">Cover Image</label>
+                                <input type="file" wire:model="albumCoverImage" class="form-control" accept="image/*">
+                                @error('albumCoverImage')
+                                    <div class="text-danger small">{{ $message }}</div>
+                                @enderror
+                                @if ($albumCoverImage)
+                                    <div class="mt-2">
+                                        <img src="{{ $albumCoverImage->temporaryUrl() }}" class="img-thumbnail" style="max-height: 100px;">
+                                        <small class="text-success d-block">New cover image selected</small>
+                                    </div>
+                                @elseif($editingAlbumId && $currentAlbumCover = \App\Models\GalleryAlbum::find($editingAlbumId)?->cover_image)
+                                    <div class="mt-2">
+                                        <img src="{{ asset('storage/' . $currentAlbumCover) }}" class="img-thumbnail" style="max-height: 100px;">
+                                        <small class="text-muted d-block">Current cover image</small>
+                                    </div>
+                                @endif
+                            </div>
+
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Display Order</label>
@@ -103,6 +122,7 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th>Cover</th>
                                     <th>Name</th>
                                     <th>Images</th>
                                     <th>Status</th>
@@ -112,6 +132,15 @@
                             <tbody>
                                 @forelse($albums as $album)
                                     <tr>
+                                        <td>
+                                            @if($album->cover_image)
+                                                <img src="{{ asset('storage/' . $album->cover_image) }}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                                            @else
+                                                <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                    <i class="fas fa-images text-white"></i>
+                                                </div>
+                                            @endif
+                                        </td>
                                         <td><strong>{{ $album->name }}</strong></td>
                                         <td>{{ $album->images()->count() }} images</td>
                                         <td>
@@ -153,7 +182,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted">No albums found</td>
+                                        <td colspan="5" class="text-center py-4 text-muted">No albums found</td>
                                     </tr>
                                 @endforelse
                             </tbody>

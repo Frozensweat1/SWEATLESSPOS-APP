@@ -108,7 +108,7 @@
     </div>
 
     @if ($showViewModal && $selectedOrder)
-        <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+        <div class="modal fade show" id="viewOrderModal" data-bs-keyboard="false" data-bs-backdrop="static" style="display: block;">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-info text-white">

@@ -98,7 +98,7 @@
 
     <!-- Payment Modal -->
     @if ($showPaymentModal && $selectedSale)
-        <div class="modal fade show" id="paymentModal" style="display: block;" tabindex="-1" role="dialog">
+        <div class="modal fade show" id="paymentModal" data-bs-keyboard="false" data-bs-backdrop="static" style="display: block;">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="text-white modal-header bg-primary">
@@ -177,6 +177,6 @@
         </div>
 
         <!-- Modal Backdrop -->
-        <div class="modal-backdrop fade show" style="display: block;"></div>
+        <div class="modal-backdrop fade show"></div>
     @endif
 </div>

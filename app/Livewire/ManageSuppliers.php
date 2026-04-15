@@ -271,9 +271,19 @@ class ManageSuppliers extends Component
         if ($supplier) {
             $supplier->delete();
             $this->logNotification('Supplier Deleted', "Supplier '{$supplier->name}' deleted successfully.");
-            LivewireAlert::success('Successfully Deleted ' . $supplier->name)->show();
+            LivewireAlert::title('Success')
+                ->text('Successfully Deleted ' . $supplier->name)
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         } else {
-            LivewireAlert::error('Unable to delete supplier record.')->show();
+            LivewireAlert::title('Error')
+                ->text('Unable to delete supplier record.')
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
     protected $listeners = [

@@ -112,7 +112,7 @@
                                                 <a class="dropdown-item" type="button"
                                                     wire:click="Edit({{ $supplier->id }})">Edit</a>
                                                 <a class="dropdown-item text-danger"
-                                                    wire:click="Delete({{ $supplier->id }})"
+                                                    wire:click="delete({{ $supplier->id }})"
                                                     href="javascript:void(0)">Delete</a>
                                             </div>
                                         </div>

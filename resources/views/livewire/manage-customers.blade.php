@@ -122,7 +122,7 @@
                                             <div class="bg-white py-2">
                                                 <a class="dropdown-item" wire:click="Edit({{ $customer->id }})"
                                                     type="button">Edit</a>
-                                                <a class="dropdown-item text-danger"
+                                                <a class="dropdown-item text-danger" type="button"
                                                     wire:click="Delete({{ $customer->id }})">Delete</a>
                                             </div>
                                         </div>

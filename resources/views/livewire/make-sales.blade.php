@@ -144,8 +144,7 @@
                 </div>
             @else
                 <div class="col-md-auto d-flex align-items-center">
-                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                        wire:click="openDiscountAuthModal">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="openDiscountAuthModal">
                         <i class="fas fa-user-shield me-1"></i>Authorize Discount
                     </button>
                 </div>
@@ -191,7 +190,8 @@
             @include('livewire.modals.receipt-modal-header')
 
             <!-- Receipt Header -->
-            <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #333; padding-bottom: 15px;">
+            <div
+                style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #333; padding-bottom: 15px;">
                 <img src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}" alt="Company Logo"
                     style="height: 50px; margin-bottom: 10px;">
                 <h4 style="margin: 5px 0; font-weight: bold;">{{ $settings->site_name ?? 'Sweatless POS' }}</h4>
@@ -400,71 +400,72 @@
                                 wire:click="closeViewReceipt"></button>
                         </div>
                         <div class="modal-body" id="viewReceipt"
-                            style="font-family: 'Courier New', monospace; font-size: 12px;">
+                            style="font-family: 'Courier New', monospace; font-size: 14px; color: #333;">
 
                             <!-- Receipt Header -->
                             <div
-                                style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #333; padding-bottom: 15px;">
+                                style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px;">
                                 <img src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}"
-                                    alt="Company Logo" style="height: 50px; margin-bottom: 10px;">
-                                <h4 style="margin: 5px 0; font-weight: bold;">
-                                    {{ $settings->site_name ?? 'Sweatless POS' }}</h4>
-                                <p style="margin: 2px 0; font-size: 11px;">
+                                    alt="Company Logo" style="height: 60px; margin-bottom: 10px;">
+                                <h3 style="margin: 5px 0; font-weight: bold;">
+                                    {{ $settings->site_name ?? 'Sweatless POS' }}</h3>
+                                <p style="margin: 5px 0; font-size: 13px;">
                                     {{ $settings->receipt_header ?? 'In God We Trust!' }}</p>
                             </div>
 
                             <!-- Transaction Info -->
-                            <div style="margin-bottom: 15px; font-size: 11px;">
-                                <p style="margin: 3px 0;"><strong>Receipt #:</strong> {{ $viewingSale->id }}</p>
-                                <p style="margin: 3px 0;"><strong>Date:</strong>
+                            <div style="margin-bottom: 15px; font-size: 14px;">
+                                <p style="margin: 5px 0;"><strong>Receipt No:</strong> {{ $viewingSale->id }}</p>
+                                <p style="margin: 5px 0;"><strong>Date:</strong>
                                     {{ $viewingSale->created_at->format('M d, Y') }}</p>
-                                <p style="margin: 3px 0;"><strong>Time:</strong>
+                                <p style="margin: 5px 0;"><strong>Time:</strong>
                                     {{ $viewingSale->created_at->format('H:i:s') }}</p>
-                                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                                <hr style="margin: 10px 0; border: none; border-top: 1px dashed #666;">
                             </div>
 
-                            <!-- Shop Contact Details & Location -->
-                            <div style="margin-bottom: 15px; font-size: 10px;">
-                                <p style="margin: 2px 0;">
+                            <!-- Shop Contact Details -->
+                            <div style="margin-bottom: 15px; font-size: 13px;">
+                                <p style="margin: 5px 0;">
                                     <strong>{{ $settings->site_name ?? 'Sweatless POS' }}</strong></p>
-                                <p style="margin: 2px 0;">{{ $settings->address ?? '' }}</p>
-                                <p style="margin: 2px 0;">Tel: {{ $settings->contact_phone ?? '' }}</p>
-                                <p style="margin: 2px 0;">Email: {{ $settings->contact_email ?? '' }}</p>
-                                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                                <p style="margin: 5px 0;">{{ $settings->address ?? '' }}</p>
+                                <p style="margin: 5px 0;">Tel: {{ $settings->contact_phone ?? '' }}</p>
+                                <p style="margin: 5px 0;">Email: {{ $settings->contact_email ?? '' }}</p>
+                                <hr style="margin: 10px 0; border: none; border-top: 1px dashed #666;">
                             </div>
 
                             <!-- Customer Info -->
-                            <div style="margin-bottom: 15px; font-size: 11px;">
-                                <p style="margin: 3px 0;"><strong>Customer:</strong></p>
+                            <div style="margin-bottom: 15px; font-size: 14px;">
+                                <p style="margin: 5px 0;"><strong>Customer:</strong></p>
                                 @if ($viewingCustomer)
-                                    <p style="margin: 2px 0;">{{ $viewingCustomer->name }}</p>
-                                    <p style="margin: 2px 0;">{{ $viewingCustomer->phone ?? '' }}</p>
+                                    <p style="margin: 3px 0;">{{ $viewingCustomer->name }}</p>
+                                    <p style="margin: 3px 0;">{{ $viewingCustomer->phone ?? '' }}</p>
                                 @else
-                                    <p style="margin: 2px 0;">Walk-in Customer</p>
+                                    <p style="margin: 3px 0;">Walk-in Customer</p>
                                 @endif
-                                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                                <hr style="margin: 10px 0; border: none; border-top: 1px dashed #666;">
                             </div>
 
                             <!-- Barcode -->
-                            <div style="text-align: center; margin-bottom: 15px;">
+                            <div style="text-align: center; margin-bottom: 20px;">
                                 <img src="data:image/png;base64,{{ $viewingSaleBarcode }}" alt="Sale Barcode"
-                                    style="height: 40px;">
+                                    style="height: 50px;">
                             </div>
 
                             <!-- Items Table -->
-                            <div style="margin-bottom: 15px;">
-                                <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                            <div style="margin-bottom: 20px;">
+                                <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
                                     <thead>
-                                        <tr style="border-bottom: 1px dashed #999;">
-                                            <th style="text-align: left; padding: 3px 0;">Item</th>
-                                            <th style="text-align: center; padding: 3px 0;">Qty</th>
-                                            <th style="text-align: right; padding: 3px 0;">Total</th>
+                                        <tr style="border-bottom: 2px solid #333;">
+                                            <th style="text-align: left; padding: 8px 0;">Item Description</th>
+                                            <th style="text-align: center; padding: 8px 0;">Qty</th>
+                                            <th style="text-align: right; padding: 8px 0;">Price</th>
+                                            <th style="text-align: right; padding: 8px 0;">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($viewingSale->saleDetails as $detail)
                                             <tr>
-                                                <td style="padding: 3px 0;">
+                                                <td style="padding: 8px 0; vertical-align: top;">
                                                     @if ($detail->product)
                                                         {{ $detail->product->name }}
                                                     @else
@@ -474,58 +475,66 @@
                                                         </span>
                                                     @endif
                                                 </td>
-                                                <td style="text-align: center; padding: 3px 0;">
+                                                <td style="text-align: center; padding: 8px 0;">
                                                     {{ $detail->quantity }}</td>
-                                                <td style="text-align: right; padding: 3px 0;">
-                                                    GHS{{ number_format($detail->subtotal, 2) }}</td>
+                                                <td style="text-align: right; padding: 8px 0;">
+                                                    {{ number_format($detail->subtotal / $detail->quantity, 2) }}</td>
+                                                <td style="text-align: right; padding: 8px 0;">
+                                                    {{ number_format($detail->subtotal, 2) }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
-                                <hr style="margin: 8px 0; border: none; border-top: 1px dashed #999;">
+                                <hr style="margin: 10px 0; border: none; border-top: 1px dashed #666;">
                             </div>
 
-                        <!-- Total -->
-                        <div style="margin-bottom: 15px; font-size: 12px; font-weight: bold;">
-                            @if (($viewingSale->total_discount ?? 0) > 0)
+                            <!-- Totals -->
+                            <div style="margin-bottom: 20px; font-size: 15px;">
+                                @if (($viewingSale->total_discount ?? 0) > 0)
+                                    <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                                        <span><strong>SUBTOTAL:</strong></span>
+                                        <span>GHS{{ number_format($viewingSale->total_amount + $viewingSale->total_discount, 2) }}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                                        <span><strong>DISCOUNT:</strong></span>
+                                        <span
+                                            style="color: #28a745;">-GHS{{ number_format($viewingSale->total_discount, 2) }}</span>
+                                    </div>
+                                @endif
                                 <div
-                                    style="display: flex; justify-content: space-between; padding: 4px 0; font-weight: normal;">
-                                    <span>SUBTOTAL:</span>
-                                    <span>GHS{{ number_format($viewingSale->total_amount + $viewingSale->total_discount, 2) }}</span>
+                                    style="display: flex; justify-content: space-between; border-top: 3px solid #333; border-bottom: 3px solid #333; padding: 12px 0; margin-top: 8px;">
+                                    <span style="font-size: 18px;"><strong>TOTAL</strong></span>
+                                    <span
+                                        style="font-size: 18px;"><strong>GHS{{ number_format($viewingSale->total_amount, 2) }}</strong></span>
                                 </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; padding: 4px 0; font-weight: normal;">
-                                    <span>DISCOUNT:</span>
-                                    <span>-GHS{{ number_format($viewingSale->total_discount, 2) }}</span>
-                                </div>
-                            @endif
-                            <div
-                                style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding: 8px 0;">
-                                <span>TOTAL:</span>
-                                <span>GHS{{ number_format($viewingSale->total_amount, 2) }}</span>
-                            </div>
                             </div>
 
                             <!-- Payment Status -->
                             <div
-                                style="margin-bottom: 15px; font-size: 10px; background-color: #f5f5f5; padding: 8px; border-radius: 4px;">
-                                <p style="margin: 3px 0;"><strong>Payment Method:</strong>
-                                    {{ ucfirst(str_replace('_', ' ', $viewingSale->payment_method)) }}</p>
-                                <p style="margin: 3px 0;"><strong>Status:</strong>
+                                style="margin-bottom: 20px; font-size: 14px; background-color: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6;">
+                                <p style="margin: 5px 0;"><strong>Payment Method:</strong>
+                                    {{ ucwords(str_replace('_', ' ', $viewingSale->payment_method)) }}</p>
+                                <p style="margin: 5px 0;">
+                                    <strong>Payment Status:</strong>
                                     @if ($viewingSale->payment_status === 'paid')
-                                        <span style="color: green; font-weight: bold;">✓ PAID</span>
+                                        <span style="color: #28a745; font-weight: bold; font-size: 16px;">PAID</span>
                                     @elseif ($viewingSale->payment_status === 'pending')
-                                        <span style="color: orange; font-weight: bold;">⏳ PENDING</span>
+                                        <span
+                                            style="color: #ffc107; font-weight: bold; font-size: 16px;">PENDING</span>
                                     @else
-                                        <span style="color: blue; font-weight: bold;">⚠ PARTIAL</span>
+                                        <span
+                                            style="color: #17a2b8; font-weight: bold; font-size: 16px;">PARTIAL</span>
                                     @endif
                                 </p>
                             </div>
 
+                            <!-- Footer -->
                             <div
-                                style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #999; font-size: 11px;">
-                                <p style="margin: 5px 0;">
+                                style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #666; font-size: 14px;">
+                                <p style="margin: 8px 0; font-weight: bold;">
                                     {{ $settings->receipt_footer ?? 'Thank you for your purchase!' }}</p>
+                                <p style="margin: 8px 0; font-size: 12px; color: #666;">Please keep this receipt for
+                                    your records</p>
                             </div>
                         </div>
                         <div class="modal-footer bg-light">

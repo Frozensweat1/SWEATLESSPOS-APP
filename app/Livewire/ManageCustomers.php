@@ -286,9 +286,19 @@ class ManageCustomers extends Component
         if ($customer) {
             $customer->delete();
             $this->logNotification('Customer Deleted', 'Deleted customer: ' . $customer->name);
-            LivewireAlert::success('Successfully Deleted ' . $customer->name)->show();
+            LivewireAlert::title('Success')
+                ->text('Successfully Deleted ' . $customer->name)
+                ->success()
+                ->toast()
+                ->position('top-end')
+                ->show();
         } else {
-            LivewireAlert::error('Unable to delete customer record.')->show();
+            LivewireAlert::title('Error')
+                ->text('Unable to delete ' . $customer->name)
+                ->error()
+                ->toast()
+                ->position('top-end')
+                ->show();
         }
     }
 

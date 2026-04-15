@@ -24,6 +24,7 @@ class ManageGallery extends Component
     public $albumDescription = '';
     public $albumDisplayOrder = 0;
     public $albumIsActive = true;
+    public $albumCoverImage;
     public $editingAlbumId = null;
 
     public $imageTitle = '';
@@ -44,6 +45,7 @@ class ManageGallery extends Component
         'albumDescription' => 'nullable|string',
         'albumDisplayOrder' => 'integer|min:0',
         'albumIsActive' => 'boolean',
+        'albumCoverImage' => 'nullable|image|max:2048', // 2MB cover image
     ];
 
     protected $imageRules = [
@@ -89,6 +91,7 @@ class ManageGallery extends Component
         $this->albumDescription = $album->description;
         $this->albumDisplayOrder = $album->display_order;
         $this->albumIsActive = $album->is_active;
+        $this->albumCoverImage = null; // Reset new cover image upload
     }
 
     public function saveAlbum()
@@ -96,24 +99,43 @@ class ManageGallery extends Component
         $rules = $this->albumRules;
         if ($this->editingAlbumId) {
             $rules['albumSlug'] = 'required|string|max:255|unique:gallery_albums,slug,' . $this->editingAlbumId;
+            $rules['albumCoverImage'] = 'nullable|image|max:2048';
         }
 
         $this->validate($rules);
 
+        $coverImagePath = null;
+        if ($this->albumCoverImage) {
+            $coverImagePath = $this->albumCoverImage->store('gallery/covers', 'public');
+        }
+
         if ($this->editingAlbumId) {
             $album = GalleryAlbum::findOrFail($this->editingAlbumId);
-            $album->update([
+            
+            $updateData = [
                 'name' => $this->albumName,
                 'slug' => $this->albumSlug,
                 'description' => $this->albumDescription,
                 'display_order' => $this->albumDisplayOrder,
                 'is_active' => $this->albumIsActive,
-            ]);
+            ];
+            
+            // Only update cover image if a new one was uploaded
+            if ($coverImagePath) {
+                // Delete old cover if exists
+                if ($album->cover_image) {
+                    Storage::disk('public')->delete($album->cover_image);
+                }
+                $updateData['cover_image'] = $coverImagePath;
+            }
+            
+            $album->update($updateData);
         } else {
             GalleryAlbum::create([
                 'name' => $this->albumName,
                 'slug' => $this->albumSlug,
                 'description' => $this->albumDescription,
+                'cover_image' => $coverImagePath,
                 'display_order' => $this->albumDisplayOrder,
                 'is_active' => $this->albumIsActive,
                 'created_by' => Auth::id(),
@@ -191,6 +213,7 @@ class ManageGallery extends Component
         $this->albumDescription = '';
         $this->albumDisplayOrder = 0;
         $this->albumIsActive = true;
+        $this->albumCoverImage = null;
     }
 
     public function resetImageForm()

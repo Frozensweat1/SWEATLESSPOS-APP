@@ -18,10 +18,10 @@
             <div class="d-flex align-items-center w-100 mt-3">
                 <img class="navbar-logo" src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}"
                     alt="{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}"
-                    style="height: 36px; width: auto; object-fit: contain;" />
+                    style="height: 20px; width: auto; object-fit: contain;" />
                 <div class="ms-2 d-flex flex-column justify-content-center">
                     <span class="font-sans-serif fw-bold text-dark"
-                        style="font-size: 15px; line-height: 1.2;">{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}</span>
+                        style="font-size: 14px; line-height: 1.2;">{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}</span>
                 </div>
             </div>
         </a>
@@ -185,7 +185,7 @@
                                 <span class="nav-link-text ps-1">Product Management</span>
                             </div>
                         </a>
-                        <ul class="nav collapse {{ Request::routeIs('manage.categories', 'manage-products', 'stock.adjustments', 'reorder.alerts', 'purchase.orders') ? 'show' : '' }}"
+                        <ul class="nav collapse {{ Request::routeIs('manage.categories', 'manage-products', 'stock.adjustments', 'reorder.alerts', 'purchase.orders', 'inventory.transfers') ? 'show' : '' }}"
                             id="products">
                             <li class="nav-item">
                                 <a class="nav-link {{ Request::routeIs('manage.categories') ? 'active' : '' }}"
@@ -216,6 +216,14 @@
                                     href="{{ route('reorder.alerts') }}">
                                     <div class="d-flex align-items-center">
                                         <span class="nav-link-text ps-1">Reorder Alerts</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('inventory.transfers') ? 'active' : '' }}"
+                                    href="{{ route('inventory.transfers') }}">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-text ps-1">Inventory Transfers</span>
                                     </div>
                                 </a>
                             </li>

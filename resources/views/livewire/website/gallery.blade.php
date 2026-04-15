@@ -53,26 +53,28 @@
             <div class="row">
                 @forelse($albums as $album)
                     <div class="col-md-4 col-lg-3 mb-4">
-                        <div class="card h-100 cursor-pointer" wire:click="selectAlbum({{ $album->id }})">
-                            @if ($album->cover_image)
-                                <img src="{{ asset('storage/' . $album->cover_image) }}" class="card-img-top"
-                                    alt="{{ $album->name }}" style="height: 250px; object-fit: cover;">
-                            @else
-                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
-                                    style="height: 250px;">
-                                    <span class="text-muted">No Cover Image</span>
-                                </div>
-                            @endif
-                            <div class="card-body">
-                                <h5 class="card-title">{{ $album->name }}</h5>
-                                @if ($album->description)
-                                    <p class="card-text text-muted small">{{ Str::limit($album->description, 80) }}</p>
+                        <a href="{{ route('website.gallery.detail', $album->slug) }}" class="text-decoration-none">
+                            <div class="card h-100">
+                                @if ($album->cover_image)
+                                    <img src="{{ asset('storage/' . $album->cover_image) }}" class="card-img-top"
+                                        alt="{{ $album->name }}" style="height: 250px; object-fit: cover;">
+                                @else
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
+                                        style="height: 250px;">
+                                        <span class="text-muted">No Cover Image</span>
+                                    </div>
                                 @endif
-                                <span class="badge bg-primary">
-                                    {{ $album->images()->count() }} images
-                                </span>
+                                <div class="card-body">
+                                    <h5 class="card-title text-dark">{{ $album->name }}</h5>
+                                    @if ($album->description)
+                                        <p class="card-text text-muted small">{{ Str::limit($album->description, 80) }}</p>
+                                    @endif
+                                    <span class="badge bg-primary">
+                                        {{ $album->images()->count() }} images
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 @empty
                     <div class="col-12">
