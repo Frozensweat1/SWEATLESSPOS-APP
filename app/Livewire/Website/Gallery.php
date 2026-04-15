@@ -4,6 +4,7 @@ namespace App\Livewire\Website;
 
 use Livewire\Component;
 use App\Models\GalleryAlbum;
+use App\Models\GalleryImage;
 use App\Models\WebsiteSetting;
 use Livewire\Attributes\Layout;
 
@@ -14,6 +15,7 @@ class Gallery extends Component
     public $selectedAlbum = null;
     public $selectedImages = [];
     public $heroBackgroundUrl = '';
+    public $viewingImage = null;
 
     public function mount()
     {
@@ -37,10 +39,21 @@ class Gallery extends Component
         $this->selectedImages = $this->selectedAlbum->activeImages()->get();
     }
 
+    public function viewImage($imageId)
+    {
+        $this->viewingImage = GalleryImage::find($imageId);
+    }
+
+    public function closeImageModal()
+    {
+        $this->viewingImage = null;
+    }
+
     public function clearSelection()
     {
         $this->selectedAlbum = null;
         $this->selectedImages = [];
+        $this->viewingImage = null;
     }
 
     public function render()
