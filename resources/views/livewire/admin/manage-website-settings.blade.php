@@ -132,6 +132,16 @@
                             @enderror
                         </div>
 
+                        <div class="mb-3">
+                            <label class="form-label">WhatsApp Number</label>
+                            <input type="text" wire:model="settings.whatsapp_number"
+                                class="form-control @error('settings.whatsapp_number') is-invalid @enderror"
+                                placeholder="+233501234567">
+                            @error('settings.whatsapp_number')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         <hr class="my-4">
                         <h5 class="mb-3">Hero Section Background</h5>
 

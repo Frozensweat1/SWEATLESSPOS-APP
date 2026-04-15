@@ -213,6 +213,10 @@
                             <a href="{{ \App\Models\WebsiteSetting::get('tiktok_url') }}" target="_blank"
                                 class="text-white me-3" title="TikTok"><i class="fab fa-tiktok"></i></a>
                         @endif
+                        @if (\App\Models\WebsiteSetting::get('whatsapp_number'))
+                            <a href="https://wa.me/{{ \App\Models\WebsiteSetting::get('whatsapp_number') }}" target="_blank"
+                                class="text-white me-3" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                        @endif
                     </div>
                 </div>
                 <div class="col-md-3 mb-3">
