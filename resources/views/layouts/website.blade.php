@@ -1,6 +1,8 @@
 @php
     $siteName = \App\Models\WebsiteSetting::get('site_name', 'SweatlessPOS');
     $siteLogo = \App\Models\WebsiteSetting::get('logo_image');
+    $faviconUrl = $siteLogo ? asset('storage/' . $siteLogo) : asset('assets/img/logo.png');
+    $siteDescription = \App\Models\WebsiteSetting::get('site_description', 'Your trusted point of sale solution');
 @endphp
 
 <!DOCTYPE html>
@@ -9,10 +11,33 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{ $page->meta_description ?? config('app.name') }}">
+    <meta name="description" content="{{ $page->meta_description ?? $siteDescription }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="keywords" content="{{ $page->meta_keywords ?? 'POS, Point of Sale, Retail, Business Management, ' . $siteName }}">
+    <meta name="author" content="{{ $siteName }}">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ $siteName }}">
+    <meta property="og:title" content="{{ $page->meta_title ?? ($page->title ?? $siteName) }}">
+    <meta property="og:description" content="{{ $page->meta_description ?? $siteDescription }}">
+    <meta property="og:image" content="{{ $faviconUrl }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $page->meta_title ?? ($page->title ?? $siteName) }}">
+    <meta name="twitter:description" content="{{ $page->meta_description ?? $siteDescription }}">
+    <meta name="twitter:image" content="{{ $faviconUrl }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
+    <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
 
-    <title>{{ $page->meta_title ?? ($page->title ?? config('app.name')) }}</title>
+    <title>{{ $page->meta_title ?? ($page->title ?? $siteName) }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

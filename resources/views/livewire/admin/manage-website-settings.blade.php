@@ -24,6 +24,12 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="form-label">Site Description (for SEO)</label>
+                            <textarea wire:model="settings.site_description" class="form-control" rows="2"
+                                placeholder="Brief description of your business for search engines"></textarea>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label">Site Logo</label>
                             <input type="file" wire:model="logoImage" accept="image/*"
                                 class="form-control @error('logoImage') is-invalid @enderror">

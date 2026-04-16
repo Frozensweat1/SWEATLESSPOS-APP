@@ -24,6 +24,11 @@ class WebsiteSettingsSeeder extends Seeder
                 'type' => 'string',
             ],
             [
+                'key' => 'site_description',
+                'value' => 'Your trusted point of sale solution for modern business management',
+                'type' => 'string',
+            ],
+            [
                 'key' => 'email',
                 'value' => 'contact@sweatlesspos.com',
                 'type' => 'string',
