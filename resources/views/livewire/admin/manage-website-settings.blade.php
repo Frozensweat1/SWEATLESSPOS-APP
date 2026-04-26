@@ -321,9 +321,11 @@
                         </p>
                         <p>
                             <strong>Contact:</strong><br>
-                            📧 {{ $settings['email'] ?? 'email@example.com' }}<br>
-                            📱 {{ $settings['phone'] ?? '+1 (555) 000-0000' }}<br>
-                            📍 {{ Str::limit($settings['address'] ?? 'Your Address', 30) }}
+
+                            📧 {{ \App\Models\WebsiteSetting::get('email', 'info@example.com') }}<br>
+                            📱 {{ \App\Models\WebsiteSetting::get('phone', '+1 (555) 000-0000') }}<br>
+                            📍 {{ \App\Models\WebsiteSetting::get('address', 'Your Address') }}
+
                         </p>
                     </div>
                 </div>

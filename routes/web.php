@@ -5,6 +5,7 @@ use App\Livewire\CustomerReport;
 use App\Livewire\CustomerReportDetail;
 use App\Livewire\EditUser;
 use App\Livewire\FinancialReport;
+use App\Livewire\GenerateBarcodes;
 use App\Livewire\InventoryReport;
 use App\Livewire\MakeSales;
 use App\Livewire\ManageCategory;
@@ -37,6 +38,7 @@ use App\Livewire\Website\ProductDetail;
 use App\Livewire\Website\Gallery;
 use App\Livewire\Website\Contact;
 use App\Livewire\Website\Testimonials;
+use App\Http\Controllers\BarcodeController;
 use Illuminate\Support\Facades\Route;
 
 // Public Website Routes
@@ -104,6 +106,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/manage-suppliers', ManageSuppliers::class)->name('manage.suppliers');
         Route::get('/manage-categories', ManageCategory::class)->name('manage.categories');
         Route::get('/manage-products', ManageProduct::class)->name('manage-products');
+        Route::get('/generate-barcodes', GenerateBarcodes::class)->name('generate.barcodes');
         Route::get('/stock-adjustments', ManageStockAdjustments::class)->name('stock.adjustments');
         Route::get('/reorder-alerts', ManageReorderAlerts::class)->name('reorder.alerts');
         Route::get('/purchase-orders', ManagePurchaseOrders::class)->name('purchase.orders');
@@ -132,5 +135,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/customer-report', CustomerReport::class)->name('customer.report');
         Route::get('/customer-report-detail/{id}', CustomerReportDetail::class)->name('customerreport.detail');
         Route::get('/manage-customers', ManageCustomers::class)->name('manage.customers');
+    });
+
+    // Barcode download routes (accessible to all authenticated users)
+    Route::middleware('auth')->group(function () {
+        Route::get('/barcode/download/{filename}', [BarcodeController::class, 'download'])->name('barcode.download');
+        Route::get('/barcode/list', [BarcodeController::class, 'list'])->name('barcode.list');
+        Route::delete('/barcode/delete/{filename}', [BarcodeController::class, 'delete'])->name('barcode.delete');
     });
 });
