@@ -5,9 +5,11 @@ namespace App\Livewire;
 use App\Jobs\GenerateProductBarcodesPdf;
 use App\Models\Product;
 use Illuminate\Support\Facades\Queue;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Layout('layouts.app')]
 class GenerateBarcodes extends Component
 {
     use WithPagination;
