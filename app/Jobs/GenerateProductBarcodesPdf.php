@@ -11,7 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use Picqer\Barcode\BarcodeGenerator;
-use Picqer\Barcode\BarcodeGeneratorHTML;
+use Picqer\Barcode\BarcodeGeneratorPNG;
 
 class GenerateProductBarcodesPdf implements ShouldQueue
 {
@@ -45,7 +45,7 @@ class GenerateProductBarcodesPdf implements ShouldQueue
             $barcodes = [];
             foreach ($products as $product) {
                 try {
-                    $generator = new BarcodeGeneratorHTML();
+                    $generator = new BarcodeGeneratorPNG();
                     $barcodeValue = $product->barcode;
 
                     $originalValue = $barcodeValue;
@@ -57,11 +57,11 @@ class GenerateProductBarcodesPdf implements ShouldQueue
                     }
 
                     $typeConstant = $this->getSafeBarcodeType($barcodeValue);
-                    $barcode = $generator->getBarcode($barcodeValue, $typeConstant);
+                    $barcodeData = $generator->getBarcode($barcodeValue, $typeConstant);
                     $barcodes[] = [
                         'product_name' => $product->name,
                         'barcode' => $originalValue,
-                        'barcode_html' => $barcode,
+                        'barcode_data' => base64_encode($barcodeData),
                     ];
                 } catch (\Exception $e) {
                     \Log::warning("Failed to generate barcode for product {$product->id} ({$product->barcode}): " . $e->getMessage() . " - " . get_class($e));
