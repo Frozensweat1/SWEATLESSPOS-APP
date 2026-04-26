@@ -78,78 +78,81 @@
 
         <!-- Sales Table -->
         <div class="card">
+            <div class="border-bottom card-header bg-light">
+                <h5 class="mb-0 fs-0">Sales Records</h5>
+            </div>
             <div class="p-0 card-body">
-                <table class="table mb-0 overflow-hidden table-sm table-striped fs--1">
-                    <thead class="bg-200 text-900">
-                        <tr>
-                            <th class="text-nowrap">Sale ID</th>
-                            <th class="text-nowrap">Customer</th>
-                            <th class="text-nowrap">Items</th>
-                            <th class="text-nowrap">Total Amount</th>
-                            <th class="text-nowrap">Payment Method</th>
-                            <th class="text-nowrap">Status</th>
-                            <th class="text-nowrap">Date</th>
-                            <th class="text-nowrap">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($sales as $sale)
+                <div class="table-responsive scrollbar">
+                    <table class="table mb-0 overflow-hidden table-sm table-striped fs--1" style="min-width: 920px;">
+                        <thead class="bg-200 text-900">
                             <tr>
-                                <td>#{{ $sale->id }}</td>
-                                <td>{{ $sale->customer ? $sale->customer->name : 'Guest' }}</td>
-                                <td>{{ $sale->saleDetails->count() }} item(s)</td>
-                                <td>Ghs {{ number_format($sale->total_amount, 2) }}</td>
-                                <td>{{ ucfirst($sale->payment_method) }}</td>
-                                <td>
-                                    @if ($sale->payment_status === 'paid')
-                                        <span class="badge bg-success">Paid</span>
-                                    @elseif($sale->payment_status === 'partial')
-                                        <span class="badge bg-info">Partial</span>
-                                    @else
-                                        <span class="badge bg-warning">Pending</span>
-                                    @endif
-                                </td>
-                                <td>{{ $sale->created_at->format('Y-m-d') }}</td>
+                                <th class="text-nowrap">Sale ID</th>
+                                <th class="text-nowrap">Customer</th>
+                                <th class="text-nowrap">Items</th>
+                                <th class="text-nowrap">Total Amount</th>
+                                <th class="text-nowrap">Payment Method</th>
+                                <th class="text-nowrap">Status</th>
+                                <th class="text-nowrap">Date</th>
+                                <th class="text-nowrap">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($sales as $sale)
+                                <tr>
+                                    <td class="text-nowrap">#{{ $sale->id }}</td>
+                                    <td class="text-nowrap">{{ $sale->customer ? $sale->customer->name : 'Guest' }}</td>
+                                    <td class="text-nowrap">{{ $sale->saleDetails->count() }} item(s)</td>
+                                    <td class="text-nowrap">Ghs {{ number_format($sale->total_amount, 2) }}</td>
+                                    <td class="text-nowrap">{{ ucfirst($sale->payment_method) }}</td>
+                                    <td class="text-nowrap">
+                                        @if ($sale->payment_status === 'paid')
+                                            <span class="badge bg-success">Paid</span>
+                                        @elseif($sale->payment_status === 'partial')
+                                            <span class="badge bg-info">Partial</span>
+                                        @else
+                                            <span class="badge bg-warning">Pending</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-nowrap">{{ $sale->created_at->format('Y-m-d') }}</td>
 
-                                <td class="py-2 align-middle white-space-nowrap text-end">
-                                    <div class="dropdown font-sans-serif position-static">
-                                        <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
-                                            type="button" id="customer-dropdown-0" data-bs-toggle="dropdown"
-                                            data-boundary="window" aria-haspopup="true" aria-expanded="false">
-                                            <span class="fas fa-ellipsis-h fs--1"></span>
-                                        </button>
-                                        <div class="py-0 border dropdown-menu dropdown-menu-end"
-                                            aria-labelledby="customer-dropdown-0">
-                                            <div class="py-2 bg-white">
-                                                <a class="dropdown-item text-primary"
-                                                    wire:click="viewReceipt({{ $sale->id }})"
-                                                    href="javascript:void(0)">
-                                                    <i class="fas fa-eye me-2"></i>View Receipt
-                                                </a>
-                                                <hr class="my-1">
-                                                <a class="dropdown-item text-success"
-                                                    wire:click="Refund({{ $sale->saleDetails->first()?->id }})"
-                                                    href="javascript:void(0)">
-                                                    <i class="fas fa-undo me-2"></i>Refund
-                                                </a>
+                                    <td class="py-2 align-middle white-space-nowrap text-end">
+                                        <div class="dropdown font-sans-serif position-static">
+                                            <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
+                                                type="button" id="customer-dropdown-0" data-bs-toggle="dropdown"
+                                                data-boundary="window" aria-haspopup="true" aria-expanded="false">
+                                                <span class="fas fa-ellipsis-h fs--1"></span>
+                                            </button>
+                                            <div class="py-0 border dropdown-menu dropdown-menu-end"
+                                                aria-labelledby="customer-dropdown-0">
+                                                <div class="py-2 bg-white">
+                                                    <a class="dropdown-item text-primary"
+                                                        wire:click="viewReceipt({{ $sale->id }})"
+                                                        href="javascript:void(0)">
+                                                        <i class="fas fa-eye me-2"></i>View Receipt
+                                                    </a>
+                                                    <hr class="my-1">
+                                                    <a class="dropdown-item text-success"
+                                                        wire:click="Refund({{ $sale->saleDetails->first()?->id }})"
+                                                        href="javascript:void(0)">
+                                                        <i class="fas fa-undo me-2"></i>Refund
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="text-center">No sales found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="text-center">No sales found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-
-        <!-- Bulk Actions and Pagination -->
-        <div class="mt-3 d-flex justify-content-between align-items-center">
-            {{ $sales->links() }}
+            <div class="card-footer d-flex justify-content-center">
+                {{ $sales->links() }}
+            </div>
         </div>
     </div>
     @if ($isRefundMode)
