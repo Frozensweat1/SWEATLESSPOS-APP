@@ -42,15 +42,18 @@
         }
 
         .barcode-image {
-            margin: 8px 0;
+            margin: 8px 0 6px;
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 42px;
         }
 
-        .barcode-image svg {
+        .barcode-image img {
             max-width: 100%;
+            max-height: 48px;
             height: auto;
+            display: block;
         }
 
         .barcode-text {
@@ -93,7 +96,15 @@
 
             <div class="barcode-item">
                 <div class="barcode-label">
-                    {{ substr($barcode['product_name'], 0, 25) }}
+                    {{ $barcode['product_name'] }}
+                </div>
+
+                <div class="barcode-image">
+                    @if (!empty($barcode['barcode_data']))
+                        <img src="data:image/png;base64,{{ $barcode['barcode_data'] }}" alt="Barcode {{ $barcode['barcode'] }}">
+                    @else
+                        <span style="font-size: 9px; color: #888;">Barcode image unavailable</span>
+                    @endif
                 </div>
 
                 <div class="barcode-text">

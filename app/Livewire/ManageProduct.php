@@ -20,6 +20,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use Illuminate\Support\Facades\DB;
+use Picqer\Barcode\BarcodeGeneratorPNG;
 
 #[Layout('layouts.app')]
 class ManageProduct extends Component
@@ -158,6 +159,52 @@ class ManageProduct extends Component
         $writer->save($path);
 
         return response()->download($path)->deleteFileAfterSend();
+    }
+
+    public function regenerateAllBarcodes()
+    {
+        $storeId = (int) $this->getStoreId();
+
+        Product::where('store_id', $storeId)
+            ->withoutTrashed()
+            ->select('id')
+            ->chunkById(200, function ($products) use ($storeId) {
+                foreach ($products as $product) {
+                    $barcode = $this->buildBarcodeValue($storeId, (int) $product->id);
+
+                    Product::where('id', $product->id)->update([
+                        'barcode' => $barcode,
+                    ]);
+                }
+            });
+
+        LivewireAlert::title('Success')
+            ->text('All product barcodes were regenerated from store ID and product ID.')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
+    }
+
+    public function barcodePreview(string $barcode): ?string
+    {
+        if (trim($barcode) === '') {
+            return null;
+        }
+
+        try {
+            $generator = new BarcodeGeneratorPNG();
+            $png = $generator->getBarcode($barcode, $generator::TYPE_CODE_128, 2, 40);
+
+            return 'data:image/png;base64,' . base64_encode($png);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    protected function buildBarcodeValue(int $storeId, int $productId): string
+    {
+        return $storeId . str_pad((string) $productId, 6, '0', STR_PAD_LEFT);
     }
     public function create()
     {

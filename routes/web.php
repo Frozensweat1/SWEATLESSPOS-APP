@@ -140,6 +140,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     // Barcode download routes (accessible to all authenticated users)
     Route::middleware('auth')->group(function () {
         Route::get('/barcode/download/{filename}', [BarcodeController::class, 'download'])->name('barcode.download');
+        Route::get('/barcode/export/{export}/download', [BarcodeController::class, 'downloadExport'])->name('barcode.export.download');
         Route::get('/barcode/list', [BarcodeController::class, 'list'])->name('barcode.list');
         Route::delete('/barcode/delete/{filename}', [BarcodeController::class, 'delete'])->name('barcode.delete');
     });

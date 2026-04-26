@@ -177,7 +177,7 @@
                     </li>
                     <!-- Product Management -->
                     <li class="nav-item">
-                        <a class="nav-link dropdown-indicator {{ Request::routeIs('manage.categories', 'manage-products', 'stock.adjustments', 'reorder.alerts', 'purchase.orders') ? 'active' : '' }}"
+                        <a class="nav-link dropdown-indicator {{ Request::routeIs('manage.categories', 'manage-products', 'stock.adjustments', 'reorder.alerts', 'purchase.orders', 'generate.barcodes') ? 'active' : '' }}"
                             href="#products" role="button" data-bs-toggle="collapse" aria-expanded="false"
                             aria-controls="products">
                             <div class="d-flex align-items-center">
@@ -185,7 +185,7 @@
                                 <span class="nav-link-text ps-1">Product Management</span>
                             </div>
                         </a>
-                        <ul class="nav collapse {{ Request::routeIs('manage.categories', 'manage-products', 'stock.adjustments', 'reorder.alerts', 'purchase.orders', 'inventory.transfers') ? 'show' : '' }}"
+                        <ul class="nav collapse {{ Request::routeIs('manage.categories', 'manage-products', 'stock.adjustments', 'reorder.alerts', 'purchase.orders', 'inventory.transfers', 'generate.barcodes') ? 'show' : '' }}"
                             id="products">
                             <li class="nav-item">
                                 <a class="nav-link {{ Request::routeIs('manage.categories') ? 'active' : '' }}"
@@ -232,6 +232,15 @@
                                     href="{{ route('purchase.orders') }}">
                                     <div class="d-flex align-items-center">
                                         <span class="nav-link-text ps-1">Purchase Orders</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ Request::routeIs('generate.barcodes') ? 'active' : '' }}"
+                                    href="{{ route('generate.barcodes') }}">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-icon"><span class="fas fa-barcode"></span></span>
+                                        <span class="nav-link-text ps-1">Generate Barcodes</span>
                                     </div>
                                 </a>
                             </li>

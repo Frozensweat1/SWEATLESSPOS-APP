@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\BarcodeExport;
 use App\Models\Product;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
@@ -21,20 +22,43 @@ class GenerateProductBarcodesPdf implements ShouldQueue
     protected $userId;
     protected $barcodeType;
     protected $itemsPerPage;
+    protected $exportId;
+    protected $storeId;
 
-    public function __construct(array $productIds, $userId, $barcodeType = 'CODE128', $itemsPerPage = 12)
+    public function __construct(array $productIds, $userId, $barcodeType = 'CODE128', $itemsPerPage = 12, $exportId = null, $storeId = null)
     {
         $this->productIds = $productIds;
         $this->userId = $userId;
         $this->barcodeType = $barcodeType;
         $this->itemsPerPage = $itemsPerPage;
+        $this->exportId = $exportId;
+        $this->storeId = $storeId;
     }
 
     public function handle(): void
     {
+        $export = null;
+
         try {
-            $products = Product::whereIn('id', $this->productIds)
-                ->where('barcode', '!=', null)
+            if ($this->exportId) {
+                $export = BarcodeExport::find($this->exportId);
+                if ($export) {
+                    $export->update([
+                        'status' => 'processing',
+                        'error_message' => null,
+                    ]);
+                }
+            }
+
+            $productsQuery = Product::whereIn('id', $this->productIds)
+                ->whereNotNull('barcode')
+                ->where('barcode', '!=', '');
+
+            if ($this->storeId) {
+                $productsQuery->where('store_id', $this->storeId);
+            }
+
+            $products = $productsQuery
                 ->select('id', 'name', 'barcode')
                 ->get();
 
@@ -72,7 +96,10 @@ class GenerateProductBarcodesPdf implements ShouldQueue
                 throw new \Exception('Failed to generate any barcodes.');
             }
 
-            $filename = 'barcodes_' . now()->timestamp . '.pdf';
+            $timestamp = now()->format('YmdHis');
+            $filename = 'barcodes_' . $timestamp . '_' . ($this->exportId ?: uniqid()) . '.pdf';
+            $filePath = "barcodes/{$filename}";
+
             $pdf = Pdf::loadView('barcodes.barcode-pdf', [
                 'barcodes' => $barcodes,
                 'itemsPerPage' => $this->itemsPerPage,
@@ -80,17 +107,31 @@ class GenerateProductBarcodesPdf implements ShouldQueue
                 ->setOption('enable_html5_parser', true)
                 ->setOption('isPhpEnabled', true);
 
-            Storage::disk('local')->put("barcodes/{$filename}", $pdf->output());
+            Storage::disk('local')->put($filePath, $pdf->output());
+
+            if ($export) {
+                $export->update([
+                    'status' => 'completed',
+                    'filename' => $filename,
+                    'file_path' => $filePath,
+                    'completed_at' => now(),
+                    'error_message' => null,
+                ]);
+            }
 
             \Log::info("Barcodes PDF generated successfully: {$filename}", [
                 'user_id' => $this->userId,
                 'product_count' => count($barcodes),
                 'file' => $filename,
             ]);
-
-            \Session::flash('barcode_success', "Barcodes generated successfully! File: {$filename}");
-
         } catch (\Exception $e) {
+            if ($export) {
+                $export->update([
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                ]);
+            }
+
             \Log::error("Barcode generation failed: {$e->getMessage()}", [
                 'user_id' => $this->userId,
                 'product_ids' => $this->productIds,
@@ -122,6 +163,16 @@ class GenerateProductBarcodesPdf implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
+        if ($this->exportId) {
+            $export = BarcodeExport::find($this->exportId);
+            if ($export) {
+                $export->update([
+                    'status' => 'failed',
+                    'error_message' => $exception->getMessage(),
+                ]);
+            }
+        }
+
         \Log::error("GenerateProductBarcodesPdf job failed: {$exception->getMessage()}", [
             'user_id' => $this->userId,
             'product_ids' => $this->productIds,

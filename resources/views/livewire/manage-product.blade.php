@@ -41,6 +41,15 @@
                                     aria-hidden="true"></span>
                             </button>
 
+                            <button class="btn btn-falcon-warning btn-sm d-flex" type="button"
+                                wire:click="regenerateAllBarcodes">
+                                <span class="fas fa-barcode" data-fa-transform="shrink-3 down-2"></span>
+                                <span class="d-none d-sm-inline-block ms-1">Regenerate Barcodes</span>
+                                <span wire:loading wire:target="regenerateAllBarcodes"
+                                    class="spinner-border spinner-border-sm ms-1" role="status"
+                                    aria-hidden="true"></span>
+                            </button>
+
                             <!-- Bulk Delete Button -->
                             <button class="btn btn-danger btn-sm d-flex" type="button" wire:click="confirmBulkDelete"
                                 {{ empty($selectedProducts) ? 'disabled' : '' }}>
@@ -92,6 +101,7 @@
                             <th> <input class="form-check-input" type="checkbox" wire:model.live="selectAll"> </th>
                             <th class="text-nowrap" scope="col">Name</th>
                             <th class="text-nowrap" scope="col">Barcode</th>
+                            <th class="text-nowrap" scope="col">Barcode Preview</th>
                             <th class="text-nowrap" scope="col">SKU</th>
                             <th class="text-nowrap" scope="col">Price</th>
                             <th class="w-200" scope="col" style="min-width: 200px;">Description</th>
@@ -136,6 +146,17 @@
                                     </a>
                                 </td>
                                 <td class="text-nowrap"> {{ $product->barcode }} </td>
+                                <td class="text-nowrap">
+                                    @php
+                                        $barcodeImage = $this->barcodePreview((string) $product->barcode);
+                                    @endphp
+                                    @if ($barcodeImage)
+                                        <img src="{{ $barcodeImage }}" alt="Barcode {{ $product->barcode }}"
+                                            style="height: 42px; width: auto;">
+                                    @else
+                                        <span class="text-muted">N/A</span>
+                                    @endif
+                                </td>
                                 <td class="text-nowrap"> {{ $product->sku }} </td>
                                 <td class="text-nowrap"> Ghs {{ $product->price }} </td>
                                 <td class="w-200"> {{ $product->description }} </td>
@@ -169,7 +190,7 @@
 
                         @empty
                             <tr>
-                                <td colspan="14">
+                                <td colspan="15">
                                     <div class="alert alert-info text-center" role="alert">No record found!</div>
                                 </td>
                             </tr>
