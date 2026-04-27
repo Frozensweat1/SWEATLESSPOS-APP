@@ -26,22 +26,57 @@ class SaleReport extends Component
     public $paymentMethod;
     public $searchTerm;
     public $perPage = 5;
+    public $showSaleDetails = false;
+    public $selectedSale = null;
 
     public function mount()
     {
         $this->initStoreId();
         $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $this->endDate = Carbon::now()->endOfDay()->format('Y-m-d H:i:s');
+        $this->endDate = Carbon::now()->format('Y-m-d');
+    }
+
+    public function updatedStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPaymentMethod()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSearchTerm()
+    {
+        $this->resetPage();
     }
 
     public function getSalesQuery()
     {
+        $start = Carbon::parse($this->startDate)->startOfDay();
+        $end = Carbon::parse($this->endDate)->endOfDay();
+
         return Sale::where('store_id', $this->getStoreId())
             ->with(['saleDetails' => function ($query) {
                 $query->where('is_refunded', false);
             }, 'saleDetails.product', 'customer', 'user'])
-            ->where('created_at', '>=', $this->startDate)
-            ->where('created_at', '<=', $this->endDate);
+            ->whereBetween('created_at', [$start, $end])
+            ->when($this->paymentMethod, fn($q) => $q->where('payment_method', $this->paymentMethod))
+            ->when($this->searchTerm, function ($q) {
+                $term = trim($this->searchTerm);
+
+                $q->where(function ($inner) use ($term) {
+                    $inner->where('id', 'like', "%{$term}%")
+                        ->orWhereHas('customer', fn($customerQ) => $customerQ->where('name', 'like', "%{$term}%"))
+                        ->orWhereHas('saleDetails.product', fn($productQ) => $productQ->where('name', 'like', "%{$term}%"));
+                });
+            })
+            ->orderBy('created_at', 'desc');
     }
 
     public function getSalesProperty()
@@ -52,22 +87,18 @@ class SaleReport extends Component
     public function getSalesSummaryProperty()
     {
         $query = $this->getSalesQuery();
-        
-        $totalRevenue = SaleDetail::whereHas('sale', fn($q) => $q->where('store_id', $this->getStoreId())
-            ->where('created_at', '>=', $this->startDate)
-            ->where('created_at', '<=', $this->endDate)
-            ->when($this->paymentMethod, fn($q) => $q->where('payment_method', $this->paymentMethod)))
+
+        $salesIds = (clone $query)->pluck('id');
+
+        $totalRevenue = SaleDetail::whereIn('sale_id', $salesIds)
             ->where('is_refunded', false)
             ->sum('subtotal');
 
-        $totalItems = SaleDetail::whereHas('sale', fn($q) => $q->where('store_id', $this->getStoreId())
-            ->where('created_at', '>=', $this->startDate)
-            ->where('created_at', '<=', $this->endDate)
-            ->when($this->paymentMethod, fn($q) => $q->where('payment_method', $this->paymentMethod)))
+        $totalItems = SaleDetail::whereIn('sale_id', $salesIds)
             ->where('is_refunded', false)
             ->sum('quantity');
 
-        $transactionCount = $query->count();
+        $transactionCount = $salesIds->count();
 
         return [
             'totalRevenue' => $totalRevenue,
@@ -79,17 +110,7 @@ class SaleReport extends Component
 
     public function export($format)
     {
-        $query = $this->getSalesQuery();
-        
-        if ($this->searchTerm) {
-            $query->where(function ($q) {
-                $q->whereHas('customer', fn($sub) => $sub->where('name', 'like', "%{$this->searchTerm}%"))
-                  ->orWhere('id', 'like', "%{$this->searchTerm}%")
-                  ->orWhereHas('saleDetails.product', fn($sub) => $sub->where('name', 'like', "%{$this->searchTerm}%"));
-            });
-        }
-
-        $sales = $query->with(['saleDetails.product', 'customer', 'user'])->get();
+        $sales = $this->getSalesQuery()->with(['saleDetails.product', 'customer', 'user'])->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -133,6 +154,27 @@ class SaleReport extends Component
 
         $writer->save($filePath);
         return response()->download($filePath)->deleteFileAfterSend(true);
+    }
+
+    public function viewSaleDetails($saleId)
+    {
+        $this->selectedSale = Sale::where('store_id', $this->getStoreId())
+            ->with([
+                'saleDetails' => fn($q) => $q->where('is_refunded', false)->with('product'),
+                'customer',
+                'user',
+            ])
+            ->find($saleId);
+
+        if ($this->selectedSale) {
+            $this->showSaleDetails = true;
+        }
+    }
+
+    public function closeSaleDetails()
+    {
+        $this->showSaleDetails = false;
+        $this->selectedSale = null;
     }
 
     public function render()

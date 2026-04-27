@@ -14,7 +14,7 @@
 
         <div class="card-body">
             <div class="row mb-4">
-                <div class="col-md-2">
+                <div class="col-md-4">
                     <div class="card bg-primary text-white">
                         <div class="card-body py-2">
                             <small>Total Products</small>
@@ -22,7 +22,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-4">
                     <div class="card bg-info text-white">
                         <div class="card-body py-2">
                             <small>Total Stock</small>
@@ -30,7 +30,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-4">
                     <div class="card bg-success text-white">
                         <div class="card-body py-2">
                             <small>Stock Value</small>
@@ -38,7 +38,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-4">
                     <div class="card bg-warning text-dark">
                         <div class="card-body py-2">
                             <small>Low Stock</small>
@@ -46,7 +46,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-4">
                     <div class="card bg-danger text-white">
                         <div class="card-body py-2">
                             <small>Out of Stock</small>
@@ -54,7 +54,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-4">
                     <div class="card bg-secondary text-white">
                         <div class="card-body py-2">
                             <small>Expiring Soon</small>
@@ -93,12 +93,14 @@
                 </div>
                 <div class="col-md-2">
                     <div class="form-check">
-                        <input type="checkbox" wire:model.live="expiringSoon" class="form-check-input" id="expiringSoon">
+                        <input type="checkbox" wire:model.live="expiringSoon" class="form-check-input"
+                            id="expiringSoon">
                         <label class="form-check-label" for="expiringSoon">Expiring Soon</label>
                     </div>
                 </div>
                 <div class="col-md-1">
-                    <input type="number" wire:model.live="lowStockThreshold" class="form-control form-control-sm" placeholder="Threshold" title="Low stock threshold">
+                    <input type="number" wire:model.live="lowStockThreshold" class="form-control form-control-sm"
+                        placeholder="Threshold" title="Low stock threshold">
                 </div>
             </div>
 
@@ -125,13 +127,15 @@
                                 <td>{{ $product->category->name ?? 'N/A' }}</td>
                                 <td>Ghs {{ number_format($product->price, 2) }}</td>
                                 <td>Ghs {{ number_format($product->cost_price, 2) }}</td>
-                                <td class="{{ $product->stock_quantity <= $lowStockThreshold ? 'text-warning' : '' }}">{{ $product->stock_quantity }}</td>
+                                <td class="{{ $product->stock_quantity <= $lowStockThreshold ? 'text-warning' : '' }}">
+                                    {{ $product->stock_quantity }}</td>
                                 <td>Ghs {{ number_format($product->stock_quantity * $product->price, 2) }}</td>
-                                <td class="{{ $product->expiry_date && $product->expiry_date->diffInDays(now()) <= 30 ? 'text-danger' : '' }}">
+                                <td
+                                    class="{{ $product->expiry_date && $product->expiry_date->diffInDays(now()) <= 30 ? 'text-danger' : '' }}">
                                     {{ $product->expiry_date?->format('Y-m-d') ?? 'N/A' }}
                                 </td>
                                 <td>
-                                    @if($product->stock_quantity <= 0)
+                                    @if ($product->stock_quantity <= 0)
                                         <span class="badge bg-danger">Out of Stock</span>
                                     @elseif($product->stock_quantity <= $lowStockThreshold)
                                         <span class="badge bg-warning">Low Stock</span>
@@ -141,7 +145,9 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="9" class="text-center">No products found</td></tr>
+                            <tr>
+                                <td colspan="9" class="text-center">No products found</td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>

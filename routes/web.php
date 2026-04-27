@@ -39,6 +39,8 @@ use App\Livewire\Website\Gallery;
 use App\Livewire\Website\Contact;
 use App\Livewire\Website\Testimonials;
 use App\Http\Controllers\BarcodeController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 
 // Public Website Routes
@@ -99,6 +101,96 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/analytics', \App\Livewire\Admin\AnalyticsDashboard::class)->name('analytics.dashboard');
         Route::get('/activity-logs', \App\Livewire\Admin\ActivityLogViewer::class)->name('activity.logs');
         Route::get('/inventory-transfers', \App\Livewire\ManageInventoryTransfers::class)->name('inventory.transfers');
+        Route::get('/system/ui-diagnostics', function (Request $request) {
+            $assetsToCheck = [
+                'assets/css/theme.min.css',
+                'assets/css/user.min.css',
+                'assets/css/theme-rtl.min.css',
+                'assets/css/user-rtl.min.css',
+                'vendors/overlayscrollbars/OverlayScrollbars.min.css',
+                'assets/js/config.js',
+                'assets/js/theme.js',
+                'vendors/bootstrap/bootstrap.min.js',
+            ];
+
+            $requestHost = $request->getHost();
+            $requestPort = $request->getPort();
+            $isCliServer = PHP_SAPI === 'cli-server';
+            $isLocalEnvironment = app()->environment(['local', 'testing']);
+
+            $inspectAsset = function (string $assetPath) use ($requestHost, $requestPort, $isCliServer, $isLocalEnvironment): array {
+                $assetUrl = asset($assetPath);
+                $localFile = public_path($assetPath);
+                $localExists = is_file($localFile);
+                $localSize = $localExists ? filesize($localFile) : null;
+                $assetHost = parse_url($assetUrl, PHP_URL_HOST);
+                $assetScheme = parse_url($assetUrl, PHP_URL_SCHEME) ?: 'unknown';
+                $assetPort = parse_url($assetUrl, PHP_URL_PORT);
+                $resolvedAssetPort = $assetPort ?: ($assetScheme === 'https' ? 443 : 80);
+                $isSameHost = strtolower((string) $assetHost) === strtolower((string) $requestHost)
+                    && (int) $resolvedAssetPort === (int) $requestPort;
+
+                $status = null;
+                $method = null;
+                $error = null;
+
+                // Avoid self-probing deadlock/timeouts on local single-thread PHP server.
+                if (($isCliServer || $isLocalEnvironment) && $isSameHost) {
+                    $method = 'LOCAL_FS';
+                    $status = $localExists ? 200 : 404;
+
+                    return [
+                        'path' => $assetPath,
+                        'url' => $assetUrl,
+                        'scheme' => $assetScheme,
+                        'local_exists' => $localExists,
+                        'local_size' => $localSize,
+                        'request_method' => $method,
+                        'http_status' => $status,
+                        'error' => $error,
+                    ];
+                }
+
+                try {
+                    $method = 'HEAD';
+                    $response = Http::timeout(6)
+                        ->withOptions(['allow_redirects' => false])
+                        ->head($assetUrl);
+
+                    if (in_array($response->status(), [405, 501], true)) {
+                        $method = 'GET';
+                        $response = Http::timeout(6)
+                            ->withHeaders(['Range' => 'bytes=0-0'])
+                            ->withOptions(['allow_redirects' => false])
+                            ->get($assetUrl);
+                    }
+
+                    $status = $response->status();
+                } catch (\Throwable $exception) {
+                    $error = $exception->getMessage();
+                }
+
+                return [
+                    'path' => $assetPath,
+                    'url' => $assetUrl,
+                    'scheme' => $assetScheme,
+                    'local_exists' => $localExists,
+                    'local_size' => $localSize,
+                    'request_method' => $method,
+                    'http_status' => $status,
+                    'error' => $error,
+                ];
+            };
+
+            $results = collect($assetsToCheck)->map($inspectAsset)->all();
+
+            return view('diagnostics.ui-assets', [
+                'checkedAt' => now(),
+                'appUrl' => config('app.url'),
+                'requestBaseUrl' => $request->getSchemeAndHttpHost(),
+                'results' => $results,
+            ]);
+        })->name('system.ui-diagnostics');
     });
 
     // Routes accessible by Admin and Super-Admin

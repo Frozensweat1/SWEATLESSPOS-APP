@@ -28,7 +28,7 @@
         </div>
 
         <div class="row mb-4">
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <div class="card bg-success text-white">
                     <div class="card-body">
                         <h6 class="card-title">Total Sales</h6>
@@ -36,7 +36,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <div class="card bg-danger text-white">
                     <div class="card-body">
                         <h6 class="card-title">Total Expenditures</h6>
@@ -44,7 +44,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <div class="card bg-warning text-dark">
                     <div class="card-body">
                         <h6 class="card-title">Total Refunded</h6>
@@ -52,7 +52,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <div class="card bg-info text-white">
                     <div class="card-body">
                         <h6 class="card-title">Inventory Value</h6>
@@ -63,7 +63,7 @@
         </div>
 
         <div class="row mb-4">
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <div class="card border-primary">
                     <div class="card-body">
                         <h6 class="card-title text-primary">Net Profit</h6>
@@ -73,7 +73,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <div class="card border-primary">
                     <div class="card-body">
                         <h6 class="card-title text-primary">Gross Margin</h6>
@@ -81,7 +81,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <div class="card border-primary">
                     <div class="card-body">
                         <h6 class="card-title text-primary">Avg Transaction</h6>
@@ -89,7 +89,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <div class="card border-primary">
                     <div class="card-body">
                         <h6 class="card-title text-primary">Inventory Cost</h6>
@@ -99,24 +99,24 @@
             </div>
         </div>
 
-        @if($salesByPaymentMethod->count() > 0)
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5>Sales by Payment Method</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    @foreach($salesByPaymentMethod as $payment)
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h6 class="text-muted">{{ ucfirst($payment->payment_method) }}</h6>
-                            <h5>Ghs {{ number_format($payment->total, 2) }}</h5>
-                        </div>
+        @if ($salesByPaymentMethod->count() > 0)
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Sales by Payment Method</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @foreach ($salesByPaymentMethod as $payment)
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6 class="text-muted">{{ ucfirst($payment->payment_method) }}</h6>
+                                    <h5>Ghs {{ number_format($payment->total, 2) }}</h5>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
-                    @endforeach
                 </div>
             </div>
-        </div>
         @endif
 
         <div class="card">
@@ -147,7 +147,9 @@
                                     <td>{{ $sale->user->name ?? 'N/A' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6" class="text-center">No sales found</td></tr>
+                                <tr>
+                                    <td colspan="6" class="text-center">No sales found</td>
+                                </tr>
                             @endforelse
                             @forelse($expenditures as $expenditure)
                                 <tr>

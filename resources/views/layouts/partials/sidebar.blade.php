@@ -14,7 +14,7 @@
                 </span>
             </button>
         </div>
-        <a class="navbar-brand d-none d-md-flex align-items-center ms-2" href="{{ route('dashboard') }}">
+        <a class="navbar-brand d-none d-xl-flex align-items-center ms-2" href="{{ route('dashboard') }}">
             <div class="d-flex align-items-center w-100 mt-3">
                 <img class="navbar-logo" src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}"
                     alt="{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}"

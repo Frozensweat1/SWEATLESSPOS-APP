@@ -30,26 +30,42 @@
         href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,500,600,700%7cPoppins:300,400,500,600,700,800,900&amp;display=swap"
         rel="stylesheet">
     <link href="{{ asset('vendors/overlayscrollbars/OverlayScrollbars.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/css/theme-rtl.min.css') }}" rel="stylesheet" id="style-rtl">
+    <link href="{{ asset('assets/css/theme-rtl.min.css') }}" rel="stylesheet" id="style-rtl" disabled>
     <link href="{{ asset('assets/css/theme.min.css') }}" rel="stylesheet" id="style-default">
-    <link href="{{ asset('assets/css/user-rtl.min.css') }}" rel="stylesheet" id="user-style-rtl">
+    <link href="{{ asset('assets/css/user-rtl.min.css') }}" rel="stylesheet" id="user-style-rtl" disabled>
     <link href="{{ asset('assets/css/user.min.css') }}" rel="stylesheet" id="user-style-default">
 
     @stack('styles')
 
     <script>
-        var isRTL = JSON.parse(localStorage.getItem('isRTL'));
+        function readStoredBoolean(key, fallback) {
+            var raw = localStorage.getItem(key);
+            if (raw === null) return fallback;
+            try {
+                return JSON.parse(raw);
+            } catch (e) {
+                return fallback;
+            }
+        }
+
+        var isRTL = readStoredBoolean('isRTL', false);
+        var linkDefault = document.getElementById('style-default');
+        var userLinkDefault = document.getElementById('user-style-default');
+        var linkRTL = document.getElementById('style-rtl');
+        var userLinkRTL = document.getElementById('user-style-rtl');
+
         if (isRTL) {
-            var linkDefault = document.getElementById('style-default');
-            var userLinkDefault = document.getElementById('user-style-default');
-            linkDefault.setAttribute('disabled', true);
-            userLinkDefault.setAttribute('disabled', true);
-            document.querySelector('html').setAttribute('dir', 'rtl');
+            linkRTL.removeAttribute('disabled');
+            userLinkRTL.removeAttribute('disabled');
+            linkDefault.setAttribute('disabled', 'disabled');
+            userLinkDefault.setAttribute('disabled', 'disabled');
+            document.documentElement.setAttribute('dir', 'rtl');
         } else {
-            var linkRTL = document.getElementById('style-rtl');
-            var userLinkRTL = document.getElementById('user-style-rtl');
-            linkRTL.setAttribute('disabled', true);
-            userLinkRTL.setAttribute('disabled', true);
+            linkRTL.setAttribute('disabled', 'disabled');
+            userLinkRTL.setAttribute('disabled', 'disabled');
+            linkDefault.removeAttribute('disabled');
+            userLinkDefault.removeAttribute('disabled');
+            document.documentElement.setAttribute('dir', 'ltr');
         }
     </script>
 

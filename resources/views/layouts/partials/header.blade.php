@@ -6,7 +6,7 @@
             <span class="toggle-line"></span>
         </span>
     </button>
-    <a class="navbar-brand me-1 me-sm-3" href="{{ route('dashboard') }}">
+    <a class="navbar-brand d-flex d-xl-none me-1 me-sm-3" href="{{ route('dashboard') }}">
         <div class="d-flex align-items-center">
             <img class="me-2" src="{{ $settings->LogoUrl ?? asset('assets/img/logo.png') }}"
                 alt="{{ $settings->site_name ?? config('app.name', 'Sweatless-POS') }}"
