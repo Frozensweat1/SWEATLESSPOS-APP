@@ -114,76 +114,86 @@
             </div>
 
         </div>
-        <div class="card-footer bg-light d-flex justify-content-between">
-
-            <div class="col-md-auto">
-                <!-- Total Amount -->
-                <div class="fw-semibold">Subtotal: {{ number_format($subtotal_amount, 2) }}</div>
-                @if ($discountAllowed)
-                    <div class="text-muted small">Discounts: {{ number_format($total_discount, 2) }}</div>
-                @endif
-                <h3 class="mt-1">Total: {{ number_format($total_amount, 2) }}</h3>
-            </div>
-            @if ($discountAllowed)
-                <div class="col-md-auto">
-                    <div class="d-flex align-items-center gap-2">
-                        <select class="form-control form-control-sm" wire:model="cart_discount_type"
-                            wire:change="updateCartDiscount">
-                            <option value="">Cart Discount</option>
-                            <option value="percent">%</option>
-                            <option value="amount">Amount</option>
-                        </select>
-                        <input type="number" class="form-control form-control-sm" min="0" step="0.01"
-                            wire:model="cart_discount_value" wire:change="updateCartDiscount" placeholder="0">
-                    </div>
-                    @if ($cart_discount_amount > 0)
-                        <div class="text-muted small mt-1">
-                            Cart discount: -{{ number_format($cart_discount_amount, 2) }}
-                        </div>
+        <div class="card-footer bg-light">
+            <div class="row g-2">
+                <!-- Total Amount Section -->
+                <div class="col-12 col-md-auto">
+                    <div class="fw-semibold">Subtotal: {{ number_format($subtotal_amount, 2) }}</div>
+                    @if ($discountAllowed)
+                        <div class="text-muted small">Discounts: {{ number_format($total_discount, 2) }}</div>
                     @endif
+                    <h3 class="mt-1">Total: {{ number_format($total_amount, 2) }}</h3>
                 </div>
-            @else
-                <div class="col-md-auto d-flex align-items-center">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="openDiscountAuthModal">
-                        <i class="fas fa-user-shield me-1"></i>Authorize Discount
+
+                <!-- Cart Discount Section -->
+                @if ($discountAllowed)
+                    <div class="col-12 col-md-auto">
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" wire:model="cart_discount_type"
+                                    wire:change="updateCartDiscount" style="flex: 1; min-width: 120px;">
+                                    <option value="">Cart Discount</option>
+                                    <option value="percent">%</option>
+                                    <option value="amount">Amount</option>
+                                </select>
+                                <input type="number" class="form-control form-control-sm" min="0" step="0.01"
+                                    wire:model="cart_discount_value" wire:change="updateCartDiscount" placeholder="0"
+                                    style="flex: 1; min-width: 80px;">
+                            </div>
+                            @if ($cart_discount_amount > 0)
+                                <div class="text-muted small">
+                                    Cart discount: -{{ number_format($cart_discount_amount, 2) }}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @else
+                    <div class="col-12 col-md-auto d-flex align-items-center">
+                        <button type="button" class="btn btn-sm btn-outline-secondary w-100"
+                            wire:click="openDiscountAuthModal">
+                            <i class="fas fa-user-shield me-1"></i>Authorize Discount
+                        </button>
+                    </div>
+                @endif
+
+                <!-- Payment Method Section -->
+                <div class="col-12 col-md-auto">
+                    <select class="form-select form-select-sm" wire:model="payment_method" style="min-width: 180px;">
+                        <option value="">Select Payment Method</option>
+                        <optgroup label="Immediate Payment">
+                            <option value="cash">Cash</option>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="mobile_money">Mobile Money</option>
+                        </optgroup>
+                        <optgroup label="Credit Sales">
+                            <option value="credit">Credit/Invoice</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Complete Sale Button Section -->
+                <div class="col-12 col-md-auto">
+                    <button type="button" wire:click="processSale"
+                        class="btn btn-sm btn-outline-primary rounded-pill w-100 d-flex align-items-center justify-content-center"
+                        wire:loading.attr="disabled" wire:loading.class="disabled"
+                        wire:loading.class.remove="btn-outline-primary" wire:loading.class.add="btn-primary"
+                        style="min-width: 150px;">
+                        <!-- Spinner -->
+                        <span wire:loading wire:target="processSale" class="spinner-border spinner-border-sm me-2"
+                            role="status" aria-hidden="true"></span>
+
+                        <!-- Icon for smaller screens -->
+                        <span class="d-none d-md-inline"><i class="fas fa-shopping-cart me-1"></i>
+                            <span wire:loading.remove wire:target="processSale">
+                                Complete Sale
+                            </span>
+                        </span>
+                        <span wire:loading wire:target="processSale"> Completing Sale...</span>
+                        <span class="d-md-none">
+                            <i class="fas fa-shopping-cart me-1"></i>
+                        </span>
                     </button>
                 </div>
-            @endif
-            <div class="col-md-auto">
-                <!-- Payment Method and Checkout -->
-                <select class="form-control form-control-sm" wire:model="payment_method">
-                    <option value="">Select Payment Method</option>
-                    <optgroup label="Immediate Payment">
-                        <option value="cash">Cash</option>
-                        <option value="credit_card">Credit Card</option>
-                        <option value="mobile_money">Mobile Money</option>
-                    </optgroup>
-                    <optgroup label="Credit Sales">
-                        <option value="credit">Credit/Invoice</option>
-                    </optgroup>
-                </select>
-            </div>
-
-            <div class="col-md-auto">
-                <button type="button" wire:click="processSale"
-                    class="btn btn-sm btn-outline-primary rounded-pill me-1 d-flex align-items-center float-end"
-                    wire:loading.attr="disabled" wire:loading.class="disabled"
-                    wire:loading.class.remove="btn-outline-primary" wire:loading.class.add="btn-primary">
-                    <!-- Spinner -->
-                    <span wire:loading wire:target="processSale" class="spinner-border spinner-border-sm me-2"
-                        role="status" aria-hidden="true"></span>
-
-                    <!-- Icon for smaller screens -->
-                    <span class="d-none d-md-inline"><i class="fas fa-shopping-cart me-1"></i>
-                        <span wire:loading.remove wire:target="processSale">
-                            Complete Sale
-                        </span>
-                    </span>
-                    <span wire:loading wire:target="processSale"> Completing Sale...</span>
-                    <span class="d-md-none">
-                        <i class="fas fa-shopping-cart me-1"></i>
-                    </span>
-                </button>
             </div>
         </div>
         @if ($showReceipt)
@@ -426,7 +436,8 @@
                             <!-- Shop Contact Details -->
                             <div style="margin-bottom: 15px; font-size: 13px;">
                                 <p style="margin: 5px 0;">
-                                    <strong>{{ $settings->site_name ?? 'Sweatless POS' }}</strong></p>
+                                    <strong>{{ $settings->site_name ?? 'Sweatless POS' }}</strong>
+                                </p>
                                 <p style="margin: 5px 0;">{{ $settings->address ?? '' }}</p>
                                 <p style="margin: 5px 0;">Tel: {{ $settings->contact_phone ?? '' }}</p>
                                 <p style="margin: 5px 0;">Email: {{ $settings->contact_email ?? '' }}</p>

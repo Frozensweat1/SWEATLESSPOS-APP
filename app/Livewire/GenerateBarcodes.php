@@ -17,6 +17,7 @@ class GenerateBarcodes extends Component
 {
     use WithPagination;
     use StoreScoped;
+    protected $paginationTheme = 'bootstrap';
 
     public $pageTitle = 'Operations';
     public $componentName = 'Generate Product Barcodes';

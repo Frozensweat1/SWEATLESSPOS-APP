@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 
 
     <!-- ===============================================-->
@@ -82,31 +82,31 @@
 
 
 <body>
- <!-- ===============================================-->
+    <!-- ===============================================-->
     <!--    Main Content-->
     <!-- ===============================================-->
     <main class="main" id="top">
         <div class="container" data-layout="container">
-          <script>
-            var isFluid = readStoredBoolean('isFluid', false);
-            if (isFluid) {
-              var container = document.querySelector('[data-layout]');
-              container.classList.remove('container');
-              container.classList.add('container-fluid');
-            }
-          </script>
-          <div class="row flex-center min-vh-100 py-6">
-            <div class="col-sm-10 col-md-8 col-lg-6 col-xl-5 col-xxl-4">
+            <script>
+                var isFluid = readStoredBoolean('isFluid', false);
+                if (isFluid) {
+                    var container = document.querySelector('[data-layout]');
+                    container.classList.remove('container');
+                    container.classList.add('container-fluid');
+                }
+            </script>
+            <div class="row flex-center min-vh-100 py-6">
+                <div class="col-sm-10 col-md-8 col-lg-6 col-xl-5 col-xxl-4">
 
-                {{ $slot }}
+                    {{ $slot }}
 
+                </div>
             </div>
-          </div>
         </div>
-      </main>
-      <!-- ===============================================-->
-      <!--    End of Main Content-->
-      <!-- ===============================================-->
+    </main>
+    <!-- ===============================================-->
+    <!--    End of Main Content-->
+    <!-- ===============================================-->
     @livewireScripts
 
     <!-- ===============================================-->

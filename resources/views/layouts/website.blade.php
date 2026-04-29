@@ -10,15 +10,16 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <meta name="description" content="{{ $page->meta_description ?? $siteDescription }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     <!-- SEO Meta Tags -->
-    <meta name="keywords" content="{{ $page->meta_keywords ?? 'POS, Point of Sale, Retail, Business Management, ' . $siteName }}">
+    <meta name="keywords"
+        content="{{ $page->meta_keywords ?? 'POS, Point of Sale, Retail, Business Management, ' . $siteName }}">
     <meta name="author" content="{{ $siteName }}">
     <meta name="robots" content="index, follow">
-    
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="{{ $siteName }}">
@@ -26,13 +27,13 @@
     <meta property="og:description" content="{{ $page->meta_description ?? $siteDescription }}">
     <meta property="og:image" content="{{ $faviconUrl }}">
     <meta property="og:url" content="{{ url()->current() }}">
-    
+
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $page->meta_title ?? ($page->title ?? $siteName) }}">
     <meta name="twitter:description" content="{{ $page->meta_description ?? $siteDescription }}">
     <meta name="twitter:image" content="{{ $faviconUrl }}">
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
     <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
@@ -239,8 +240,9 @@
                                 class="text-white me-3" title="TikTok"><i class="fab fa-tiktok"></i></a>
                         @endif
                         @if (\App\Models\WebsiteSetting::get('whatsapp_number'))
-                            <a href="https://wa.me/{{ \App\Models\WebsiteSetting::get('whatsapp_number') }}" target="_blank"
-                                class="text-white me-3" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                            <a href="https://wa.me/{{ \App\Models\WebsiteSetting::get('whatsapp_number') }}"
+                                target="_blank" class="text-white me-3" title="WhatsApp"><i
+                                    class="fab fa-whatsapp"></i></a>
                         @endif
                     </div>
                 </div>
