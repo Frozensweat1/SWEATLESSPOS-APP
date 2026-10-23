@@ -313,4 +313,6 @@
             </div>
         </div>
     </div>
+
+    @livewire('database-maintenance')
 </div>

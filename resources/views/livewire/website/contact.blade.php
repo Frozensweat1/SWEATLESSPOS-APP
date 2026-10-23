@@ -1,127 +1,58 @@
 <div>
-    <!-- Hero Section -->
-    <section class="hero-section position-relative"
-        style="background-image: {{ $heroBackgroundUrl }}; background-size: cover; background-position: center; background-attachment: fixed; min-height: 400px; display: flex; align-items: center;">
-        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0, 0, 0, 0.5); z-index: 1;">
-        </div>
-        <div class="container position-relative" style="z-index: 2;">
-            <div class="row">
-                <div class="col-lg-8">
-                    <h1 class="display-4 fw-bold text-white mb-3">Contact Us</h1>
-                    <p class="lead text-white">We'd love to hear from you. Get in touch with us.</p>
-                </div>
+    <section class="hero hero--sm" style="--hero-bg: {{ $heroBackgroundUrl }}">
+        <div class="container">
+            <h1>{{ $page->title ?? 'Contact Us' }}</h1>
+            <div class="prose lead" style="max-width:60ch">
+                {!! $page->content ?? '<p>Have questions? We would love to hear from you.</p>' !!}
             </div>
         </div>
     </section>
 
-    <div class="container my-5">
-        <div class="row">
-            <div class="col-lg-8 mx-auto">
-                <!-- Page Title -->
-                <div class="mb-5">
-                    <h1 class="display-4 fw-bold mb-3">{{ $page->title ?? 'Contact Us' }}</h1>
-                    <div class="lead text-muted">
-                        {!! $page->content ?? '<p>Have questions? We would love to hear from you.</p>' !!}
-                    </div>
-                </div>
-
-                <!-- Contact Information Cards -->
-                <div class="row mb-5">
-                    <!-- Phone -->
-                    @if ($phone)
-                        <div class="col-md-6 mb-4">
-                            <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-body text-center">
-                                    <div class="mb-3">
-                                        <i class="fas fa-phone text-primary" style="font-size: 2rem;"></i>
-                                    </div>
-                                    <h5 class="card-title">Phone</h5>
-                                    <p class="card-text text-muted">
-                                        <a href="tel:{{ $phone }}" class="text-decoration-none">
-                                            {{ $phone }}
-                                        </a>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Email -->
-                    @if ($email)
-                        <div class="col-md-6 mb-4">
-                            <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-body text-center">
-                                    <div class="mb-3">
-                                        <i class="fas fa-envelope text-success" style="font-size: 2rem;"></i>
-                                    </div>
-                                    <h5 class="card-title">Email</h5>
-                                    <p class="card-text text-muted">
-                                        <a href="mailto:{{ $email }}" class="text-decoration-none">
-                                            {{ $email }}
-                                        </a>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Address -->
+    <section class="section">
+        <div class="container split" style="align-items:start">
+            <div style="display:grid;gap:1.5rem">
+                <ul class="contact-list">
                     @if ($address)
-                        <div class="col-md-12 mb-4">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-body text-center">
-                                    <div class="mb-3">
-                                        <i class="fas fa-map-marker-alt text-danger" style="font-size: 2rem;"></i>
-                                    </div>
-                                    <h5 class="card-title">Address</h5>
-                                    <p class="card-text text-muted">{{ $address }}</p>
-                                </div>
-                            </div>
-                        </div>
+                        <li class="feature"><span class="ico"><x-site.icon name="map-pin" /></span><div><strong>Address</strong><br><span class="muted">{{ $address }}</span></div></li>
                     @endif
-                </div>
+                    @if ($phone)
+                        <li class="feature"><span class="ico"><x-site.icon name="phone" /></span><div><strong>Phone</strong><br><a href="tel:{{ preg_replace('/[^\d+]/', '', $phone) }}">{{ $phone }}</a></div></li>
+                    @endif
+                    @if ($email)
+                        <li class="feature"><span class="ico"><x-site.icon name="mail" /></span><div><strong>Email</strong><br><a href="mailto:{{ $email }}">{{ $email }}</a></div></li>
+                    @endif
+                    @if ($whatsapp)
+                        <li class="feature"><span class="ico"><x-site.icon name="message-circle" /></span><div><strong>WhatsApp</strong><br><a href="https://wa.me/{{ $whatsapp }}" target="_blank" rel="noopener noreferrer">Chat with us</a></div></li>
+                    @endif
+                </ul>
 
-                <!-- Google Map -->
-                @if ($mapsUrl)
-                    <div class="mb-5">
-                        <h3 class="mb-4 fw-bold">Find Us on the Map</h3>
-                        <div class="rounded overflow-hidden shadow-sm">
-                            <iframe src="{{ $mapsUrl }}" width="100%" height="450" style="border:0;"
-                                allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
-                            </iframe>
-                        </div>
+                @if (count($businessHours))
+                    <div class="card card-body">
+                        <h3><x-site.icon name="clock" :size="18" /> Business hours</h3>
+                        <table class="hours">
+                            @foreach ($businessHours as $day => $hours)
+                                <tr>
+                                    <td>{{ is_array($hours) ? ($hours['day'] ?? $day) : $day }}</td>
+                                    <td>{{ is_array($hours) ? ($hours['hours'] ?? (($hours['open'] ?? '') . ' – ' . ($hours['close'] ?? ''))) : $hours }}</td>
+                                </tr>
+                            @endforeach
+                        </table>
                     </div>
                 @endif
+            </div>
 
-                <!-- Business Hours (Optional) -->
-                @php
-                    $businessHours = \App\Models\WebsiteSetting::get('business_hours', null);
-                @endphp
-                @if ($businessHours && is_array($businessHours))
-                    <div class="card border-0 shadow-sm mb-5">
-                        <div class="card-body">
-                            <h5 class="card-title fw-bold mb-4">Business Hours</h5>
-                            <div class="row">
-                                @foreach ($businessHours as $day => $hours)
-                                    <div class="col-md-6 mb-3">
-                                        <strong>{{ ucfirst($day) }}:</strong>
-                                        <span class="text-muted">{{ $hours ?? 'Closed' }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
-                <!-- Contact Form CTA -->
-                <div class="mb-5">
-                    @livewire('Website.ContactFormSubmission')
-                </div>
+            <div class="card card-body">
+                <h2 style="font-size:1.4rem">Send us a message</h2>
+                @livewire('website.contact-form-submission')
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Add Font Awesome if not already included -->
-    @push('styles')
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    @endpush
+    @if ($mapsUrl)
+        <section class="section" style="padding-top:0">
+            <div class="container">
+                <iframe class="map" src="{{ $mapsUrl }}" title="Map" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+            </div>
+        </section>
+    @endif
+</div>

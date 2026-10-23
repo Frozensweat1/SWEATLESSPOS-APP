@@ -1,61 +1,44 @@
-<x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
+<x-auth.layout title="Two-factor authentication">
+    <div id="tf">
+        <span class="icon-hero"><x-site.icon name="check" :size="26" /></span>
+        <h1>Two-factor check</h1>
+        <p class="sub" data-show="code">Enter the code from your authenticator app.</p>
+        <p class="sub" data-show="recovery" hidden>Enter one of your emergency recovery codes.</p>
 
-        <div x-data="{ recovery: false }">
-            <div class="mb-4 text-sm text-gray-600 dark:text-gray-400" x-show="! recovery">
-                {{ __('Please confirm access to your account by entering the authentication code provided by your authenticator application.') }}
+        <form method="POST" action="{{ route('two-factor.login') }}" class="auth-form">
+            @csrf
+            <div data-show="code">
+                <x-auth.field name="code" label="Authentication code" id="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autofocus autocomplete="one-time-code" class="input otp" />
+            </div>
+            <div data-show="recovery" hidden>
+                <x-auth.field name="recovery_code" label="Recovery code" id="recovery_code" autocomplete="one-time-code" disabled />
             </div>
 
-            <div class="mb-4 text-sm text-gray-600 dark:text-gray-400" x-cloak x-show="recovery">
-                {{ __('Please confirm access to your account by entering one of your emergency recovery codes.') }}
+            <x-auth.submit>Verify and log in</x-auth.submit>
+
+            <div class="auth-row" style="justify-content:center">
+                <button type="button" class="link-btn" data-switch="recovery" data-show="code">Use a recovery code</button>
+                <button type="button" class="link-btn" data-switch="code" data-show="recovery" hidden>Use an authentication code</button>
             </div>
+        </form>
+    </div>
 
-            <x-validation-errors class="mb-4" />
-
-            <form method="POST" action="{{ route('two-factor.login') }}">
-                @csrf
-
-                <div class="mt-4" x-show="! recovery">
-                    <x-label for="code" value="{{ __('Code') }}" />
-                    <x-input id="code" class="block mt-1 w-full" type="text" inputmode="numeric" name="code"
-                        autofocus x-ref="code" autocomplete="one-time-code" />
-                </div>
-
-                <div class="mt-4" x-cloak x-show="recovery">
-                    <x-label for="recovery_code" value="{{ __('Recovery Code') }}" />
-                    <x-input id="recovery_code" class="block mt-1 w-full" type="text" name="recovery_code"
-                        x-ref="recovery_code" autocomplete="one-time-code" />
-                </div>
-
-                <div class="flex items-center justify-end mt-4">
-                    <button type="button"
-                        class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 underline cursor-pointer"
-                        x-show="! recovery"
-                        x-on:click="
-                                        recovery = true;
-                                        $nextTick(() => { $refs.recovery_code.focus() })
-                                    ">
-                        {{ __('Use a recovery code') }}
-                    </button>
-
-                    <button type="button"
-                        class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 underline cursor-pointer"
-                        x-cloak x-show="recovery"
-                        x-on:click="
-                                        recovery = false;
-                                        $nextTick(() => { $refs.code.focus() })
-                                    ">
-                        {{ __('Use an authentication code') }}
-                    </button>
-
-                    <x-button class="ms-4">
-                        {{ __('Log in') }}
-                    </x-button>
-                </div>
-            </form>
-        </div>
-    </x-authentication-card>
-</x-guest-layout>
+    @push('scripts')
+        <script>
+            (function () {
+                var root = document.getElementById('tf');
+                root.addEventListener('click', function (e) {
+                    var b = e.target.closest('[data-switch]');
+                    if (!b) return;
+                    var mode = b.getAttribute('data-switch');
+                    root.querySelectorAll('[data-show]').forEach(function (el) {
+                        el.hidden = el.getAttribute('data-show') !== mode;
+                    });
+                    root.querySelector('#code').disabled = mode !== 'code';
+                    root.querySelector('#recovery_code').disabled = mode !== 'recovery';
+                    root.querySelector(mode === 'code' ? '#code' : '#recovery_code').focus();
+                });
+            })();
+        </script>
+    @endpush
+</x-auth.layout>

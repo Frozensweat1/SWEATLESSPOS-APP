@@ -139,6 +139,78 @@ class SalesServiceTest extends TestCase
     }
 
     /** @test */
+    public function cannot_sell_a_product_with_zero_stock()
+    {
+        $this->product->update(['stock_quantity' => 0]);
+
+        try {
+            $this->service->createSale(
+                $this->store->id,
+                [[
+                    'product_id' => $this->product->id,
+                    'price' => 50.00,
+                    'quantity' => 1,
+                ]],
+                $this->customer->id,
+                'cash',
+                50.00
+            );
+            $this->fail('Expected the sale to be rejected when stock is zero.');
+        } catch (\Exception $exception) {
+            $this->assertStringContainsString('Insufficient stock', $exception->getMessage());
+        }
+
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertSame(0, $this->product->fresh()->stock_quantity);
+        $this->assertDatabaseCount('sale_details', 0);
+    }
+
+    /** @test */
+    public function cannot_sell_more_than_the_available_stock()
+    {
+        $this->product->update(['stock_quantity' => 1]);
+
+        try {
+            $this->service->createSale(
+                $this->store->id,
+                [[
+                    'product_id' => $this->product->id,
+                    'price' => 50.00,
+                    'quantity' => 2,
+                ]],
+                $this->customer->id,
+                'cash',
+                100.00
+            );
+            $this->fail('Expected the sale to be rejected when quantity exceeds stock.');
+        } catch (\Exception $exception) {
+            $this->assertStringContainsString('Insufficient stock', $exception->getMessage());
+        }
+
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertSame(1, $this->product->fresh()->stock_quantity);
+    }
+
+    /** @test */
+    public function cannot_sell_a_product_from_another_store()
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('One or more products are unavailable in this store.');
+
+        $this->service->createSale(
+            $this->store->id + 1,
+            [[
+                'product_id' => $this->product->id,
+                'price' => 50.00,
+                'quantity' => 1,
+            ]],
+            $this->customer->id,
+            'cash',
+            50.00
+        );
+    }
+
+    /** @test */
     public function can_create_cash_sale()
     {
         $cartItems = [

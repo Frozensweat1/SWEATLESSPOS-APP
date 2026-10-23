@@ -18,6 +18,7 @@ class UserProfile extends Component
     public $name;
     public $email;
     public $password;
+    public $password_confirmation;
     public $profile_photo;
 
     public function mount()
@@ -31,7 +32,7 @@ class UserProfile extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . Auth::id(),
-            'password' => 'nullable|min:6',
+            'password' => 'nullable|min:6|confirmed',
             'profile_photo' => 'nullable|image|max:1024', // 1MB Max
         ]);
 

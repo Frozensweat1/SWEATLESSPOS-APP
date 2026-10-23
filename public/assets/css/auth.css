@@ -1,0 +1,58 @@
+/* Authentication pages. Builds on site.css tokens (colors, buttons, inputs). */
+body.auth-body { display: block; background: var(--bg); }
+.auth-body [hidden] { display: none !important; }
+.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr; }
+@media (min-width: 960px) { .auth-shell { grid-template-columns: minmax(380px, 5fr) 6fr; } }
+
+.auth-aside {
+    display: none; position: relative; color: #fff; padding: 3rem; isolation: isolate;
+    background: linear-gradient(145deg, #312e81 0%, #4f46e5 55%, #7c3aed 100%);
+    flex-direction: column; justify-content: space-between; overflow: hidden;
+}
+.auth-aside::before, .auth-aside::after {
+    content: ""; position: absolute; border-radius: 50%; z-index: -1; background: rgb(255 255 255 / .08);
+}
+.auth-aside::before { width: 420px; height: 420px; top: -140px; right: -120px; }
+.auth-aside::after { width: 320px; height: 320px; bottom: -120px; left: -100px; }
+@media (min-width: 960px) { .auth-aside { display: flex; } }
+.auth-aside h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 800; margin: 0 0 1rem; }
+.auth-aside p { opacity: .9; max-width: 42ch; }
+.auth-points { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; gap: .9rem; }
+.auth-points li { display: flex; gap: .75rem; align-items: center; }
+.auth-points .ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: rgb(255 255 255 / .16); flex: none; }
+.auth-aside .brand { color: #fff; }
+.auth-aside small { opacity: .7; }
+
+.auth-main { display: flex; flex-direction: column; padding: 1.25rem; min-height: 100vh; }
+.auth-top { display: flex; justify-content: space-between; align-items: center; }
+.auth-top .brand { font-size: 1rem; }
+.auth-top .back { display: inline-flex; gap: .35rem; align-items: center; color: var(--muted); font-weight: 600; font-size: .9rem; }
+@media (min-width: 960px) { .auth-top .brand { visibility: hidden; } }
+
+.auth-center { flex: 1; display: grid; place-items: center; padding: 1.5rem 0; }
+.auth-card { width: min(100%, 440px); }
+.auth-card--wide { width: min(100%, 760px); }
+.auth-card h1 { font-size: 1.75rem; margin-bottom: .35rem; }
+.auth-card .sub { color: var(--muted); margin-bottom: 1.5rem; }
+.auth-form { display: grid; gap: 1.1rem; }
+.auth-row { display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; font-size: .9rem; }
+.auth-foot { text-align: center; color: var(--muted); margin-top: 1.5rem; font-size: .95rem; }
+.auth-legal { text-align: center; color: var(--muted); font-size: .8rem; padding-top: 1rem; }
+
+.pw-wrap { position: relative; }
+.pw-wrap .input { padding-right: 3rem; }
+.pw-toggle { position: absolute; right: .4rem; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--muted); padding: .45rem; border-radius: 8px; cursor: pointer; font: inherit; font-size: .8rem; font-weight: 600; }
+.pw-toggle:hover { color: var(--text); background: var(--surface-2); }
+.input.is-invalid { border-color: var(--danger); }
+.check { display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; }
+.check input { width: 1.1rem; height: 1.1rem; accent-color: var(--brand); }
+.alert--err { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.alert--info { background: var(--brand-soft); color: var(--brand); }
+.auth-card .btn[disabled] { opacity: .65; cursor: progress; }
+.btn .spin { width: 1em; height: 1em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: authspin .7s linear infinite; display: none; }
+.btn.is-busy .spin { display: inline-block; }
+@keyframes authspin { to { transform: rotate(360deg); } }
+.otp { letter-spacing: .5em; text-align: center; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.link-btn { background: none; border: 0; padding: 0; color: var(--brand); font: inherit; font-weight: 600; cursor: pointer; }
+.link-btn:hover { text-decoration: underline; }
+.icon-hero { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); margin-bottom: 1.1rem; }

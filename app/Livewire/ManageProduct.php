@@ -50,8 +50,8 @@ class ManageProduct extends Component
             'stock_quantity' => 'required|numeric',
             'category_id' => 'required|numeric|not_in:Elegir',
             'supplier_id' => 'required|numeric|not_in:Elegir',
-            'manufacture_date' => 'required|date',
-            'expiry_date' => 'required|date',
+            'manufacture_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date',
             'image' => 'nullable|image|max:5024', // max 5MB
         ];
     }
@@ -289,8 +289,8 @@ class ManageProduct extends Component
             'stock_quantity' => $this->stock_quantity,
             'category_id' => $this->category_id,
             'supplier_id' => $this->supplier_id,
-            'manufacture_date' => $this->manufacture_date,
-            'expiry_date' => $this->expiry_date,
+            'manufacture_date' => $this->manufacture_date ?: null,
+            'expiry_date' => $this->expiry_date ?: null,
             'store_id' => $this->getStoreId(),
         ]);
         // Handle image upload, if provided
@@ -344,8 +344,8 @@ class ManageProduct extends Component
                 'stock_quantity' => $this->stock_quantity,
                 'category_id' => $this->category_id,
                 'supplier_id' => $this->supplier_id,
-                'manufacture_date' => $this->manufacture_date,
-                'expiry_date' => $this->expiry_date,
+                'manufacture_date' => $this->manufacture_date ?: null,
+                'expiry_date' => $this->expiry_date ?: null,
             ];
             if ($this->image) {
                 $data['image'] = $this->image->store('products', 'public');

@@ -151,13 +151,34 @@ class MakeSales extends Component
     {
         $existingCartIndex = array_search($product->id, array_column($this->cart, 'product_id'));
 
+        if ($product->stock_quantity <= 0) {
+            LivewireAlert::title('Out of stock')
+                ->text("{$product->name} is out of stock.")
+                ->warning()
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
         if ($existingCartIndex !== false) {
+            if ($this->cart[$existingCartIndex]['quantity'] >= $product->stock_quantity) {
+                LivewireAlert::title('Insufficient stock')
+                    ->text("Only {$product->stock_quantity} units of {$product->name} are available.")
+                    ->warning()
+                    ->toast()
+                    ->position('top-end')
+                    ->show();
+                return;
+            }
+
             $this->cart[$existingCartIndex]['quantity']++;
         } else {
             $this->cart[] = [
                 'product_id' => $product->id,
                 'name' => $product->name,
                 'quantity' => 1,
+                'available_stock' => (int) $product->stock_quantity,
                 'price_per_unit' => $product->price,
                 'discount_type' => null,
                 'discount_value' => 0,
@@ -170,10 +191,45 @@ class MakeSales extends Component
 
     public function updateQuantity($index, $newQuantity)
     {
-        if ($newQuantity > 0) {
-            $this->cart[$index]['quantity'] = $newQuantity;
-            $this->updateTotalAmount();
+        if (!isset($this->cart[$index])) {
+            return;
         }
+
+        $quantity = filter_var($newQuantity, FILTER_VALIDATE_INT);
+        if ($quantity === false || $quantity < 1) {
+            $quantity = 1;
+        }
+
+        $product = Product::where('store_id', $this->getStoreId())
+            ->find($this->cart[$index]['product_id']);
+
+        if (!$product || $product->stock_quantity <= 0) {
+            unset($this->cart[$index]);
+            $this->cart = array_values($this->cart);
+            $this->updateTotalAmount();
+
+            LivewireAlert::title('Out of stock')
+                ->text('This product is no longer available.')
+                ->warning()
+                ->toast()
+                ->position('top-end')
+                ->show();
+            return;
+        }
+
+        if ($quantity > $product->stock_quantity) {
+            $quantity = (int) $product->stock_quantity;
+            LivewireAlert::title('Insufficient stock')
+                ->text("Only {$product->stock_quantity} units of {$product->name} are available.")
+                ->warning()
+                ->toast()
+                ->position('top-end')
+                ->show();
+        }
+
+        $this->cart[$index]['quantity'] = $quantity;
+        $this->cart[$index]['available_stock'] = (int) $product->stock_quantity;
+        $this->updateTotalAmount();
     }
 
     public function updateItemDiscount($index)

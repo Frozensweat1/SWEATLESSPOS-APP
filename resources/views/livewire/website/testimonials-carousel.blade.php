@@ -1,59 +1,30 @@
-<div>
-    @if (count($testimonials) > 0)
-        <div class="row">
-            <div class="col-lg-8 mx-auto">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-5">
-                        @php $current = $testimonials[$currentIndex]; @endphp
-
-                        <div class="row align-items-center">
-                            @if ($current->author_image)
-                                <div class="col-md-3 text-center mb-3 mb-md-0">
-                                    <img src="{{ asset('storage/' . $current->author_image) }}"
-                                        class="img-fluid rounded-circle shadow-sm"
-                                        style="width: 120px; height: 120px; object-fit: cover;">
-                                </div>
-                                <div class="col-md-9">
-                            @else
-                                <div class="col">
-                            @endif
-                                <div class="mb-3">
-                                    @for ($i = 0; $i < $current->rating; $i++)
-                                        <i class="fas fa-star text-warning"></i>
-                                    @endfor
-                                    @for ($i = $current->rating; $i < 5; $i++)
-                                        <i class="fas fa-star text-secondary"></i>
-                                    @endfor
-                                    <small class="text-muted ms-2">({{ $current->rating }}/5 stars)</small>
-                                </div>
-
-                                <p class="lead mb-3">"{{ $current->testimonial_text }}"</p>
-
-                                <h5 class="fw-bold mb-1">{{ $current->author_name }}</h5>
-                                @if ($current->author_title)
-                                    <p class="text-muted">{{ $current->author_title }}</p>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="carousel" x-data="{
+        scroll(dir) { const t = $refs.track; t.scrollBy({ left: dir * (t.firstElementChild?.offsetWidth ?? 300) + dir * 20, behavior: 'smooth' }); }
+    }">
+    @if ($testimonials->isEmpty())
+        <p class="muted">No reviews yet.</p>
+    @else
+        <div class="track" x-ref="track" tabindex="0" role="region" aria-label="Customer reviews">
+            @foreach ($testimonials as $t)
+                <figure class="card card-body" style="margin:0" wire:key="t-{{ $t->id }}">
+                    <x-site.stars :rating="$t->rating" />
+                    <blockquote class="quote" style="margin:.75rem 0 1rem">&ldquo;{{ $t->testimonial_text }}&rdquo;</blockquote>
+                    <figcaption style="display:flex;gap:.75rem;align-items:center">
+                        @if ($t->author_image)
+                            <img class="avatar" src="{{ asset('storage/' . $t->author_image) }}" alt="" loading="lazy" decoding="async" width="48" height="48">
+                        @else
+                            <span class="avatar"><x-site.icon name="user" :size="22" /></span>
+                        @endif
+                        <span><strong>{{ $t->author_name }}</strong><br><span class="muted" style="font-size:.85rem">{{ $t->author_title }}</span></span>
+                    </figcaption>
+                </figure>
+            @endforeach
         </div>
-
-        @if (count($testimonials) > 1)
-            <div class="d-flex justify-content-center gap-2 mt-4">
-                <button wire:click="prev" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-chevron-left"></i> Previous
-                </button>
-                <div class="align-self-center text-muted small">
-                    {{ $currentIndex + 1 }} / {{ count($testimonials) }}
-                </div>
-                <button wire:click="next" class="btn btn-outline-secondary btn-sm">
-                    Next <i class="fas fa-chevron-right"></i>
-                </button>
+        @if ($testimonials->count() > 1)
+            <div class="carousel-nav" style="margin-top:1rem">
+                <button type="button" class="icon-btn" @click="scroll(-1)" aria-label="Previous review"><x-site.icon name="chevron-left" /></button>
+                <button type="button" class="icon-btn" @click="scroll(1)" aria-label="Next review"><x-site.icon name="chevron-right" /></button>
             </div>
         @endif
-    @else
-        <div class="alert alert-info text-center">No testimonials available at the moment.</div>
     @endif
 </div>

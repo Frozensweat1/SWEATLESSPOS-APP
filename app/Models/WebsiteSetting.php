@@ -10,13 +10,28 @@ class WebsiteSetting extends Model
     protected $table = 'website_settings';
     public $timestamps = true;
 
+    protected static ?array $memo = null;
+
     /**
-     * Get setting value by key
+     * Get setting value by key (all settings are loaded once per request).
      */
     public static function get(string $key, $default = null)
     {
-        $setting = static::where('key', $key)->first();
-        return $setting ? $setting->getValue() : $default;
+        static::$memo ??= static::getAllSettings();
+
+        return array_key_exists($key, static::$memo) && static::$memo[$key] !== null
+            ? static::$memo[$key]
+            : $default;
+    }
+
+    /**
+     * CSS background value for hero sections: an uploaded image or a gradient fallback.
+     */
+    public static function backgroundCss(string $key, string $gradient = 'linear-gradient(135deg, #4f46e5, #7c3aed)'): string
+    {
+        $path = static::get($key);
+
+        return $path ? 'url("' . asset('storage/' . ltrim($path, '/')) . '")' : $gradient;
     }
 
     /**
@@ -47,6 +62,8 @@ class WebsiteSetting extends Model
             $type = 'json';
             $storedValue = json_encode($value);
         }
+
+        static::$memo = null;
 
         return static::updateOrCreate(
             ['key' => $key],

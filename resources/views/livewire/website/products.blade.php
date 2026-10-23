@@ -1,83 +1,58 @@
 <div>
-    <!-- Hero Section -->
-    <section class="hero-section position-relative"
-        style="background-image: {{ $heroBackgroundUrl }}; background-size: cover; background-position: center; background-attachment: fixed; min-height: 400px; display: flex; align-items: center;">
-        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0, 0, 0, 0.5); z-index: 1;">
-        </div>
-        <div class="container position-relative" style="z-index: 2;">
-            <div class="row">
-                <div class="col-lg-8">
-                    <h1 class="display-4 fw-bold text-white mb-3">Our Products</h1>
-                    <p class="lead text-white">Browse our collection of quality products</p>
-                </div>
-            </div>
+    <section class="hero hero--sm" style="--hero-bg: {{ $heroBackgroundUrl }}">
+        <div class="container">
+            <h1>Our products</h1>
+            <p class="lead">Find what you need — search, filter and sort below.</p>
         </div>
     </section>
 
-    <div class="container my-5">
-        <!-- Filters -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <input type="text" wire:model.live="search" class="form-control" placeholder="Search products...">
+    <section class="section">
+        <div class="container">
+            <div class="toolbar">
+                <div class="field">
+                    <x-site.icon name="search" :size="18" />
+                    <input type="search" class="input" placeholder="Search products…" aria-label="Search products" wire:model.live.debounce.300ms="search">
+                </div>
+                <select class="select" style="flex:0 1 200px" aria-label="Sort products" wire:model.live="sortBy">
+                    <option value="name">Name (A–Z)</option>
+                    <option value="price_asc">Price: low to high</option>
+                    <option value="price_desc">Price: high to low</option>
+                    <option value="newest">Newest</option>
+                </select>
             </div>
-            <div class="col-md-3">
-                <select wire:model.live="category_id" class="form-select">
-                    <option value="">All Categories</option>
-                    @foreach ($categories as $category)
-                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+
+            @if ($categories->isNotEmpty())
+                <div class="chips" style="margin-bottom:1.5rem" role="group" aria-label="Categories">
+                    <button type="button" class="chip" aria-pressed="{{ $category_id === '' ? 'true' : 'false' }}" wire:click="setCategory('')">All</button>
+                    @foreach ($categories as $cat)
+                        <button type="button" class="chip" aria-pressed="{{ (string) $category_id === (string) $cat->id ? 'true' : 'false' }}" wire:click="setCategory({{ $cat->id }})" wire:key="cat-{{ $cat->id }}">{{ $cat->name }}</button>
                     @endforeach
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select wire:model.live="sortBy" class="form-select">
-                    <option value="name">Name (A-Z)</option>
-                    <option value="price">Price (Low to High)</option>
-                    <option value="-price">Price (High to Low)</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Products Grid -->
-        <div class="row">
-            @forelse($products as $product)
-                <div class="col-md-4 col-lg-3 mb-4">
-                    <div class="card h-100">
-                        @if ($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" class="card-img-top"
-                                alt="{{ $product->name }}" style="height: 200px; object-fit: cover;">
-                        @else
-                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
-                                style="height: 200px;">
-                                <span class="text-muted">No Image</span>
-                            </div>
-                        @endif
-                        <div class="card-body">
-                            <h5 class="card-title">{{ $product->name }}</h5>
-                            <p class="card-text text-muted">{{ Str::limit($product->description, 50) }}</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="h5 mb-0">GHS {{ number_format($product->price, 2) }}</span>
-                                <span class="badge bg-success">{{ $product->stock_quantity }} in stock</span>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-white border-top">
-                            <a href="/product/{{ $product->id }}" class="btn btn-primary btn-sm w-100">View Details</a>
-                        </div>
-                    </div>
                 </div>
-            @empty
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        No products found. Please try adjusting your filters.
-                    </div>
-                </div>
-            @endforelse
-        </div>
+            @endif
 
-        <!-- Pagination -->
-        <div class="row mt-4">
-            <div class="col-12">
-                {{ $products->links() }}
+            <div wire:loading.class="is-loading" wire:target="search,sortBy,setCategory">
+                @if ($products->isEmpty())
+                    <div class="empty">
+                        <x-site.icon name="package" :size="48" />
+                        <p>No products found. Try a different search or category.</p>
+                    </div>
+                @else
+                    <div class="grid">
+                        @foreach ($products as $product)
+                            <x-site.product-card :product="$product" wire:key="p-{{ $product->id }}" />
+                        @endforeach
+                    </div>
+                @endif
             </div>
+
+            @if ($hasMore)
+                <div class="center" style="margin-top:2rem">
+                    <button type="button" class="btn btn--ghost" wire:click="loadMore" wire:loading.attr="disabled" wire:target="loadMore">
+                        <span wire:loading.remove wire:target="loadMore">Load more</span>
+                        <span wire:loading wire:target="loadMore">Loading…</span>
+                    </button>
+                </div>
+            @endif
         </div>
-    </div>
+    </section>
 </div>

@@ -136,7 +136,9 @@ class SalesService
         ?int $customerId,
         string $paymentMethod,
         float $amountPaid,
-        array $discountInfo = []
+        array $discountInfo = [],
+        ?string $clientUuid = null,
+        ?\DateTimeInterface $soldAt = null
     ): Sale {
         if (empty($cartItems)) {
             throw new \Exception('Cart is empty.');
@@ -148,11 +150,51 @@ class SalesService
             $customerId,
             $paymentMethod,
             $amountPaid,
-            $discountInfo
+            $discountInfo,
+            $clientUuid,
+            $soldAt
         ) {
+            $itemsByProduct = [];
+            foreach ($cartItems as $item) {
+                $productId = filter_var($item['product_id'] ?? null, FILTER_VALIDATE_INT);
+                $quantity = filter_var($item['quantity'] ?? null, FILTER_VALIDATE_INT);
+
+                if (!$productId || $quantity === false || $quantity <= 0) {
+                    throw new \Exception('Invalid product quantity.');
+                }
+
+                if (!isset($itemsByProduct[$productId])) {
+                    $itemsByProduct[$productId] = $item;
+                    $itemsByProduct[$productId]['quantity'] = 0;
+                }
+                $itemsByProduct[$productId]['quantity'] += $quantity;
+            }
+
+            ksort($itemsByProduct);
+
+            $products = Product::where('store_id', $storeId)
+                ->whereIn('id', array_keys($itemsByProduct))
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            if ($products->count() !== count($itemsByProduct)) {
+                throw new \Exception('One or more products are unavailable in this store.');
+            }
+
+            foreach ($itemsByProduct as $productId => $item) {
+                $product = $products->get($productId);
+                if ($product->stock_quantity < $item['quantity']) {
+                    throw new \Exception(
+                        "Insufficient stock for {$product->name}. Available: {$product->stock_quantity}."
+                    );
+                }
+            }
+
             // Calculate totals
             $subtotal = 0;
-            foreach ($cartItems as $item) {
+            foreach ($itemsByProduct as $item) {
                 $subtotal += $item['price'] * $item['quantity'];
             }
 
@@ -173,20 +215,25 @@ class SalesService
                 'payment_status' => $amountPaid >= $totalAmount ? 'paid' : 'partial',
                 'amount_paid' => $amountPaid,
                 'amount_due' => max(0, $totalAmount - $amountPaid),
+                'client_uuid' => $clientUuid,
             ]);
 
+            if ($soldAt) {
+                $sale->forceFill(['created_at' => $soldAt, 'updated_at' => $soldAt])->saveQuietly();
+            }
+
             // Create sale details and update stock
-            foreach ($cartItems as $productId => $item) {
+            foreach ($itemsByProduct as $productId => $item) {
                 SaleDetail::create([
                     'sale_id' => $sale->id,
-                    'product_id' => $item['product_id'],
+                    'product_id' => $productId,
                     'quantity' => $item['quantity'],
                     'price_per_unit' => $item['price'],
                     'subtotal' => $item['price'] * $item['quantity'],
                 ]);
 
                 // Update product stock
-                $product = Product::findOrFail($item['product_id']);
+                $product = $products->get($productId);
                 $quantityBefore = $product->stock_quantity;
                 $quantityAfter = $quantityBefore - $item['quantity'];
                 $product->update(['stock_quantity' => $quantityAfter]);
@@ -194,7 +241,7 @@ class SalesService
                 // Record stock adjustment
                 StockAdjustment::create([
                     'store_id' => $storeId,
-                    'product_id' => $item['product_id'],
+                    'product_id' => $productId,
                     'user_id' => Auth::id(),
                     'type' => 'sale',
                     'quantity_before' => $quantityBefore,

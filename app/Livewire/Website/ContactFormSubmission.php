@@ -15,6 +15,7 @@ class ContactFormSubmission extends Component
     public $phone = '';
     public $subject = '';
     public $message = '';
+    public bool $sent = false;
 
     protected $rules = [
         'name' => 'required|string|max:255',
@@ -46,12 +47,14 @@ class ContactFormSubmission extends Component
                 ->show();
 
             // Reset form
-            $this->reset();
+            $name = $this->name;
+            $this->reset(['name', 'email', 'phone', 'subject', 'message']);
+            $this->sent = true;
 
             // Log activity
             \App\Models\ActivityLog::log(
                 'contact_form_submitted',
-                "New contact form submission from {$this->name}",
+                "New contact form submission from {$name}",
                 'WebsiteContactFormSubmission'
             );
         } catch (\Exception $e) {

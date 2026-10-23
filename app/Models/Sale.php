@@ -21,6 +21,7 @@ class Sale extends Model
         'amount_due',
         'due_date',
         'user_id',
+        'client_uuid',
         'store_id'
     ];
 

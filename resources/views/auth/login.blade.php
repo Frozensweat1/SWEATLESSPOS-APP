@@ -1,53 +1,27 @@
-<x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
-        <div class="card-body p-4 p-sm-5">
-            <x-validation-errors class="mb-4" /> @session('status')
-                <div class="alert alert-success" role="alert">{{ $value }}</div>
-            @endsession
-            <div class="row flex-between-center mb-2">
-                <div class="col-auto">
-                    <h5>Log in</h5>
-                </div>
-                <div class="col-auto fs--1 text-600">
-                    <span class="mb-0 undefined">or</span>
-                    <span>
-                        <a href="{{ route('register') }}">Create an account</a>
-                    </span>
-                </div>
-            </div>
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
-                <div class="mb-3">
-                    <x-input id="email" class="form-control" type="email" name="email" :value="old('email')"
-                        required autofocus autocomplete="username" />
-                </div>
-                <div class="mb-3">
-                    <x-input id="password" class="form-control" type="password" name="password" required
-                        autocomplete="current-password" />
-                </div>
-                <div class="row flex-between-center">
-                    <div class="col-auto">
-                        <div class="form-check mb-0">
-                            <x-checkbox id="remember_me" name="remember" />
-                            <label class="form-check-label mb-0" for="basic-checkbox">{{ __('Remember me') }}</label>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        @if (Route::has('password.request'))
-                            <a class="fs--1" href="{{ route('password.request') }}">
-                                {{ __('Forgot your password?') }}
-                            </a>
-                        @endif
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <button class="btn btn-primary d-block w-100 mt-3" type="submit"
-                        name="submit">{{ __('Log in') }}</button>
-                </div>
-            </form>
+<x-auth.layout title="Log in">
+    <h1>Welcome back</h1>
+    <p class="sub">Log in to continue to your dashboard.</p>
+
+    @session('status')
+        <div class="alert alert--ok" role="status" style="margin-bottom:1rem">{{ $value }}</div>
+    @endsession
+
+    <form method="POST" action="{{ route('login') }}" class="auth-form">
+        @csrf
+        <x-auth.field name="email" label="Email" type="email" :value="old('email')" required autofocus autocomplete="username" inputmode="email" />
+        <x-auth.field name="password" label="Password" type="password" required autocomplete="current-password" />
+
+        <div class="auth-row">
+            <label class="check"><input type="checkbox" name="remember" id="remember_me"> Remember me</label>
+            @if (Route::has('password.request'))
+                <a href="{{ route('password.request') }}">Forgot password?</a>
+            @endif
         </div>
-    </x-authentication-card>
-</x-guest-layout>
+
+        <x-auth.submit>Log in</x-auth.submit>
+    </form>
+
+    @if (Route::has('register'))
+        <p class="auth-foot">New here? <a href="{{ route('register') }}">Create an account</a></p>
+    @endif
+</x-auth.layout>

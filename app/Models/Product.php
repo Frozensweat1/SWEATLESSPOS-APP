@@ -53,6 +53,20 @@ class Product extends Model
     }
 
     // Query Scopes
+    public const WEBSITE_STORE_ID = 1;
+
+    public function scopePublic($query)
+    {
+        return $query->where('store_id', self::WEBSITE_STORE_ID)->where('is_active', true);
+    }
+
+    public function getStockStatusAttribute(): string
+    {
+        $qty = (int) $this->stock_quantity;
+
+        return $qty <= 0 ? 'out' : ($qty <= 10 ? 'low' : 'in');
+    }
+
     public function scopeWhereStore($query, $storeId)
     {
         return $query->where('store_id', $storeId);

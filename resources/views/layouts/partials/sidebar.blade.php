@@ -296,6 +296,14 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {{ Request::routeIs('pos.offline') ? 'active' : '' }}"
+                                href="{{ route('pos.offline') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-text ps-1">Offline POS</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {{ Request::routeIs('cash.drawer') ? 'active' : '' }}"
                                 href="{{ route('cash.drawer') }}">
                                 <div class="d-flex align-items-center">

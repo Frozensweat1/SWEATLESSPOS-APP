@@ -2,44 +2,33 @@
 
 namespace App\Livewire\Website;
 
-use Livewire\Component;
 use App\Models\GalleryAlbum;
-use App\Models\GalleryImage;
 use App\Models\WebsiteSetting;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('layouts.website')]
 class GalleryDetail extends Component
 {
-    public $album = null;
-    public $images = [];
-    public $heroBackgroundUrl = '';
-    public $viewingImage = null;
+    public string $slug;
 
-    public function mount($slug)
+    public function mount($slug): void
     {
-        $this->album = GalleryAlbum::with('activeImages')->bySlug($slug)->firstOrFail();
-        $this->images = $this->album->activeImages()->get();
-
-        // Build background URL
-        $galleryBackground = WebsiteSetting::get('gallery_background_image');
-        $this->heroBackgroundUrl = $galleryBackground
-            ? 'url(' . asset('storage/' . $galleryBackground) . ')'
-            : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
-    }
-
-    public function viewImage($imageId)
-    {
-        $this->viewingImage = GalleryImage::find($imageId);
-    }
-
-    public function closeImageModal()
-    {
-        $this->viewingImage = null;
+        $this->slug = GalleryAlbum::active()->bySlug($slug)->firstOrFail()->slug;
     }
 
     public function render()
     {
-        return view('livewire.website.gallery-detail');
+        $album = GalleryAlbum::active()->bySlug($this->slug)->with('activeImages')->firstOrFail();
+
+        return view('livewire.website.gallery-detail', [
+            'album' => $album,
+            'images' => $album->activeImages,
+            'heroBackgroundUrl' => WebsiteSetting::backgroundCss('gallery_background_image', 'linear-gradient(135deg, #0ea5e9, #6366f1)'),
+        ])->layoutData([
+            'title' => $album->name,
+            'description' => $album->description ?: 'Photos from ' . $album->name,
+            'image' => $album->cover_image ? asset('storage/' . $album->cover_image) : null,
+        ]);
     }
 }

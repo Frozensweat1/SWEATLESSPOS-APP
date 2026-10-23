@@ -37,6 +37,11 @@
     @endif
     <ul class="flex-row navbar-nav navbar-nav-icons ms-auto align-items-center">
         <li class="nav-item">
+            <button type="button" class="btn btn-falcon-default btn-sm me-2 install-btn" hidden>
+                <span class="fas fa-download me-1"></span> Install app
+            </button>
+        </li>
+        <li class="nav-item">
             <div class="px-2 theme-control-toggle fa-icon-wait">
                 <input class="form-check-input ms-0 theme-control-toggle-input" id="themeControlToggle" type="checkbox"
                     data-theme-control="theme" value="dark" />

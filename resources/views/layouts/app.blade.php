@@ -17,7 +17,12 @@
     <!--    Favicons-->
     <!-- ===============================================-->
     <link rel="icon" href="{{ $settings->FaviconUrl ?? asset('assets/img/logo.png') }}" type="image/x-icon">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="manifest" href="{{ url('/manifest.webmanifest') }}">
+    <link rel="apple-touch-icon" href="{{ asset('assets/img/icon-192.png') }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script>window.SITE_PWA = {!! json_encode(['sw' => asset('sw.js'), 'scope' => rtrim(url('/'), '/') . '/'], JSON_UNESCAPED_SLASHES) !!};</script>
     <script src="{{ asset('assets/js/config.js') }}"></script>
     <script src="{{ asset('vendors/overlayscrollbars/OverlayScrollbars.min.js') }}"></script>
 
@@ -112,6 +117,16 @@
     <script src="{{ asset('assets/js/theme.js') }}"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>-->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @auth
+        <script>window.POS_QUEUE = {!! json_encode([
+            'userId' => auth()->id(),
+            'catalog' => route('pos.offline.catalog', [], false),
+            'token' => route('pos.offline.token', [], false),
+            'sync' => route('pos.offline.sync', [], false),
+        ], JSON_UNESCAPED_SLASHES) !!};</script>
+        <script src="{{ asset('assets/js/pos-queue.js') }}"></script>
+    @endauth
+    <script src="{{ asset('assets/js/app-pwa.js') }}"></script>
     @stack('js')
 </body>
 

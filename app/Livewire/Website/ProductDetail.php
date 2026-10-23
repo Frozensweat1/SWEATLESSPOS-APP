@@ -2,38 +2,61 @@
 
 namespace App\Livewire\Website;
 
-use Livewire\Component;
 use App\Models\Product;
-use App\Models\Category;
+use App\Models\WebsiteSetting;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('layouts.website')]
 class ProductDetail extends Component
 {
-    public $product;
-    public $relatedProducts = [];
-    public $phoneNumber = '';
+    public int $productId;
 
-    public function mount($id)
+    public function mount($id): void
     {
-        $this->product = Product::where('store_id', 1)->findOrFail($id);
-
-        // Get related products from same category
-        if ($this->product->category_id) {
-            $this->relatedProducts = Product::where('category_id', $this->product->category_id)
-                ->where('id', '!=', $this->product->id)
-                ->where('store_id', 1)
-                ->limit(4)
-                ->get();
-        }
-
-        // Get phone number from settings
-        $this->phoneNumber = config('app.phone_number', '+233 XXX XXX XXX');
+        $this->productId = Product::public()->findOrFail($id)->id;
     }
 
-    public function callUs()
+    public function render()
     {
-        $this->dispatch('notify', type: 'info', message: 'Please call us: ' . $this->phoneNumber);
-        return view('livewire.website.product-detail');
+        $product = Product::public()->with('category:id,name')->findOrFail($this->productId);
+
+        $related = $product->category_id
+            ? Product::public()->where('category_id', $product->category_id)
+                ->where('id', '!=', $product->id)->limit(4)->get()
+            : collect();
+
+        $image = $product->image && ! str_ends_with($product->image, 'noimage.png')
+            ? asset('storage/' . $product->image)
+            : null;
+
+        $jsonLd = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Product',
+            'name' => $product->name,
+            'description' => strip_tags((string) $product->description),
+            'image' => $image,
+            'offers' => [
+                '@type' => 'Offer',
+                'price' => number_format((float) $product->price, 2, '.', ''),
+                'priceCurrency' => config('app.currency_code', 'GHS'),
+                'availability' => $product->stock_status === 'out'
+                    ? 'https://schema.org/OutOfStock'
+                    : 'https://schema.org/InStock',
+            ],
+        ];
+
+        return view('livewire.website.product-detail', [
+            'product' => $product,
+            'relatedProducts' => $related,
+            'image' => $image,
+            'phone' => WebsiteSetting::get('phone'),
+            'whatsapp' => preg_replace('/\D+/', '', (string) WebsiteSetting::get('whatsapp_number', '')),
+        ])->layoutData([
+            'title' => $product->name,
+            'description' => strip_tags((string) $product->description) ?: 'Details for ' . $product->name,
+            'image' => $image,
+            'jsonLd' => $jsonLd,
+        ]);
     }
 }

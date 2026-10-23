@@ -1,62 +1,37 @@
-<div class="container my-5">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <div class="card shadow-sm">
-                <div class="card-body p-5">
-                    <h2 class="card-title mb-4">Get in Touch</h2>
-                    <p class="text-muted mb-4">Fill out the form below and we'll get back to you as soon as possible.</p>
-
-                    <form wire:submit="submitForm">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Name *</label>
-                            <input type="text" wire:model="name"
-                                class="form-control @error('name') is-invalid @enderror" placeholder="Your name">
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Email *</label>
-                            <input type="email" wire:model="email"
-                                class="form-control @error('email') is-invalid @enderror" placeholder="you@example.com">
-                            @error('email')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Phone</label>
-                            <input type="tel" wire:model="phone" class="form-control"
-                                placeholder="+1 (555) 000-0000">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Subject *</label>
-                            <input type="text" wire:model="subject"
-                                class="form-control @error('subject') is-invalid @enderror"
-                                placeholder="What is this about?">
-                            @error('subject')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Message *</label>
-                            <textarea wire:model="message" class="form-control @error('message') is-invalid @enderror" rows="5"
-                                placeholder="Your message here..."></textarea>
-                            @error('message')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-lg w-100" wire:loading.attr="disabled">
-                            <span wire:loading.remove><i class="fas fa-paper-plane me-2"></i> Send Message</span>
-                            <span wire:loading><i class="fas fa-spinner fa-spin me-2"></i> Sending...</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
+<form wire:submit="submitForm" class="form-grid" data-requires-online novalidate>
+    @if ($sent)<div class="alert alert--ok" role="status">Thank you! Your message has been sent. We'll get back to you soon.</div>@endif
+    <p class="offline-note">You're offline — you can send this message once you're back online.</p>
+    <div class="form-grid form-grid--2">
+        <div>
+            <label class="label" for="cf-name">Name</label>
+            <input id="cf-name" type="text" class="input" wire:model="name" autocomplete="name">
+            @error('name')<div class="error">{{ $message }}</div>@enderror
+        </div>
+        <div>
+            <label class="label" for="cf-email">Email</label>
+            <input id="cf-email" type="email" class="input" wire:model="email" autocomplete="email">
+            @error('email')<div class="error">{{ $message }}</div>@enderror
         </div>
     </div>
-</div>
+    <div class="form-grid form-grid--2">
+        <div>
+            <label class="label" for="cf-phone">Phone (optional)</label>
+            <input id="cf-phone" type="tel" class="input" wire:model="phone" autocomplete="tel">
+            @error('phone')<div class="error">{{ $message }}</div>@enderror
+        </div>
+        <div>
+            <label class="label" for="cf-subject">Subject</label>
+            <input id="cf-subject" type="text" class="input" wire:model="subject">
+            @error('subject')<div class="error">{{ $message }}</div>@enderror
+        </div>
+    </div>
+    <div>
+        <label class="label" for="cf-message">Message</label>
+        <textarea id="cf-message" class="textarea" rows="5" wire:model="message"></textarea>
+        @error('message')<div class="error">{{ $message }}</div>@enderror
+    </div>
+    <button type="submit" class="btn btn--block btn--lg" wire:loading.attr="disabled">
+        <span wire:loading.remove><x-site.icon name="send" :size="18" /> Send message</span>
+        <span wire:loading>Sending…</span>
+    </button>
+</form>

@@ -38,6 +38,7 @@ use App\Livewire\Website\ProductDetail;
 use App\Livewire\Website\Gallery;
 use App\Livewire\Website\Contact;
 use App\Livewire\Website\Testimonials;
+use App\Models\WebsiteSetting;
 use App\Http\Controllers\BarcodeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -52,6 +53,35 @@ Route::get('/testimonials', Testimonials::class)->name('website.testimonials');
 Route::get('/gallery', Gallery::class)->name('website.gallery');
 Route::get('/gallery/{slug}', \App\Livewire\Website\GalleryDetail::class)->name('website.gallery.detail');
 Route::get('/contact', Contact::class)->name('website.contact');
+
+// PWA
+Route::get('/manifest.webmanifest', function () {
+    $name = WebsiteSetting::get('site_name', config('app.name', 'Sweatless POS'));
+    $icons = [
+        ['src' => asset('assets/img/icon-192.png'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+        ['src' => asset('assets/img/icon-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+        ['src' => asset('assets/img/icon-maskable-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+    ];
+
+    return response()->json([
+        'name' => $name,
+        'short_name' => \Illuminate\Support\Str::limit($name, 12, ''),
+        'description' => WebsiteSetting::get('site_description', WebsiteSetting::get('site_tagline', '')),
+        'id' => url('/'),
+        'start_url' => url('/'),
+        'scope' => url('/') . '/',
+        'display' => 'standalone',
+        'background_color' => '#ffffff',
+        'theme_color' => '#4f46e5',
+        'shortcuts' => [
+            ['name' => 'Dashboard', 'url' => route('dashboard', [], true)],
+            ['name' => 'Sales dashboard', 'url' => route('sales.dashboard', [], true)],
+        ],
+        'icons' => $icons,
+    ], 200, ['Content-Type' => 'application/manifest+json', 'Cache-Control' => 'public, max-age=3600'], JSON_UNESCAPED_SLASHES);
+})->name('pwa.manifest');
+
+Route::get('/offline', fn () => response()->view('website.offline'))->name('pwa.offline');
 
 // Legacy home route redirect
 Route::get('/welcome', function () {
@@ -85,6 +115,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             return back();
         })->name('switch.store');
         Route::get('/system-settings', Settings::class)->name('system.settings');
+        Route::get('/system-settings/backups/{name}', function (string $name) {
+            $path = app(\App\Services\DatabaseMaintenanceService::class)->backupPath($name);
+            abort_unless($path, 404);
+
+            return response()->download($path);
+        })->name('system.backup.download');
         Route::get('/manage-roles', ManageRoles::class)->name('manage.roles');
         Route::get('/system-notifications', Notifications::class)->name('manage.notifications');
         Route::get('/system-logs', SystemLogs::class)->name('system.logs');
@@ -219,6 +255,10 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
     // Routes accessible by Cashier, Admin, and Super-Admin
     Route::middleware('role:cashier|admin|super-admin')->group(function () {
+        Route::get('/pos/offline', [\App\Http\Controllers\OfflinePosController::class, 'page'])->name('pos.offline');
+        Route::get('/pos/offline/catalog', [\App\Http\Controllers\OfflinePosController::class, 'catalog'])->name('pos.offline.catalog');
+        Route::get('/pos/offline/token', [\App\Http\Controllers\OfflinePosController::class, 'token'])->name('pos.offline.token');
+        Route::post('/pos/offline/sync', [\App\Http\Controllers\OfflinePosController::class, 'sync'])->name('pos.offline.sync');
         Route::get('/make-sales', MakeSales::class)->name('make.sales');
         Route::get('/cash-drawer', ManageCashDrawer::class)->name('cash.drawer');
         Route::get('/manage-customers', ManageCustomers::class)->name('manage.customers');

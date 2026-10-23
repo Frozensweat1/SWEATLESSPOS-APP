@@ -1,39 +1,17 @@
-<x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
+<x-auth.layout title="Forgot password">
+    <span class="icon-hero"><x-site.icon name="mail" :size="26" /></span>
+    <h1>Forgot your password?</h1>
+    <p class="sub">Enter your email and we'll send you a link to choose a new one.</p>
 
-        <div class="card-body p-4 p-sm-5">
+    @session('status')
+        <div class="alert alert--ok" role="status" style="margin-bottom:1rem">{{ $value }}</div>
+    @endsession
 
-            <x-validation-errors class="mb-4" />
+    <form method="POST" action="{{ route('password.email') }}" class="auth-form">
+        @csrf
+        <x-auth.field name="email" label="Email" type="email" :value="old('email')" required autofocus autocomplete="username" inputmode="email" />
+        <x-auth.submit>Email reset link</x-auth.submit>
+    </form>
 
-            @session('status')
-                <div class="alert alert-success" role="alert">{{ $value }}</div>
-            @endsession
-
-            <div class="row flex-between-center mb-2">
-                <div class="col-auto">
-                    <h5>Forgot Password</h5>
-                </div>
-                <p> {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
-                </p>
-            </div>
-            <form method="POST" action="{{ route('password.email') }}">
-                @csrf
-
-                <div class="mb-3">
-                    <x-input id="email" class="form-control" type="email" name="email" :value="old('email')"
-                        required autofocus autocomplete="username" />
-                </div>
-
-                <div class="mb-3">
-                    <button class="btn btn-primary d-block w-100 mt-3" type="submit" name="submit">
-                        {{ __('Email Password Reset Link') }}
-                    </button>
-                </div>
-            </form>
-
-        </div>
-    </x-authentication-card>
-</x-guest-layout>
+    <p class="auth-foot"><a href="{{ route('login') }}"><x-site.icon name="arrow-left" :size="14" /> Back to log in</a></p>
+</x-auth.layout>

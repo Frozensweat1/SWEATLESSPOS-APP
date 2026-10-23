@@ -55,7 +55,8 @@
                                 <td>{{ $item['name'] }}</td>
                                 <td>{{ number_format($item['price_per_unit'], 2) }}</td>
                                 <td>
-                                    <input type="number" wire:model="cart.{{ $index }}.quantity"
+                                    <input type="number" min="1" max="{{ $item['available_stock'] ?? '' }}"
+                                        wire:model="cart.{{ $index }}.quantity"
                                         wire:change="updateQuantity({{ $index }}, $event.target.value)" />
                                 </td>
                                 @if ($discountAllowed)

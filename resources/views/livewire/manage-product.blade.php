@@ -162,11 +162,11 @@
                                 <td class="w-200"> {{ $product->description }} </td>
                                 <td class="text-nowrap">Ghs {{ $product->cost_price }} </td>
                                 <td class="text-nowrap">{{ $product->stock_quantity }} </td>
-                                <td class="text-nowrap">{{ $product->category->name }} </td>
-                                <td class="text-nowrap">{{ $product->supplier->name }} </td>
-                                <td class="text-nowrap">{{ $product->manufacture_date->format('Y-m-d') }} </td>
-                                <td class="text-nowrap">{{ $product->expiry_date->format('Y-m-d') }} </td>
-                                <td class="text-nowrap">{{ $product->created_at->format('Y-m-d') }}</td>
+                                <td class="text-nowrap">{{ $product->category?->name ?? '—' }} </td>
+                                <td class="text-nowrap">{{ $product->supplier?->name ?? '—' }} </td>
+                                <td class="text-nowrap">{{ $product->manufacture_date?->format('Y-m-d') ?? '—' }} </td>
+                                <td class="text-nowrap">{{ $product->expiry_date?->format('Y-m-d') ?? '—' }} </td>
+                                <td class="text-nowrap">{{ $product->created_at?->format('Y-m-d') ?? '—' }}</td>
                                 <td class="align-middle white-space-nowrap py-2 text-end">
                                     <div class="dropdown font-sans-serif position-static">
                                         <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"

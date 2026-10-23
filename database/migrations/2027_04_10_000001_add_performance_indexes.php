@@ -14,13 +14,7 @@ return new class extends Migration
     {
         // Helper function to check if index exists
         $indexExists = function ($table, $indexName) {
-            $indexes = DB::select("SHOW INDEX FROM `$table`");
-            foreach ($indexes as $index) {
-                if ($index->Key_name === $indexName) {
-                    return true;
-                }
-            }
-            return false;
+            return Schema::hasIndex($table, $indexName);
         };
 
         // Sales table indexes

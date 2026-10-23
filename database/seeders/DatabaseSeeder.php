@@ -21,6 +21,9 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             UserSeeder::class,
             WebsitePagesSeeder::class,
+            CustomerSeeder::class,
+            ProductSeeder::class,
+            SaleSeeder::class,
         ]);
         // User::factory(10)->create();
 

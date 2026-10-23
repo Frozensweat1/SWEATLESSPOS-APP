@@ -2,47 +2,27 @@
 
 namespace App\Livewire\Website;
 
-use Livewire\Component;
 use App\Models\Testimonial;
 use App\Models\WebsitePage;
 use App\Models\WebsiteSetting;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('layouts.website')]
 class Testimonials extends Component
 {
-    public $page;
-    public $testimonials = [];
-    public $heroBackgroundUrl = '';
-
-    public function mount()
-    {
-        try {
-            $this->page = WebsitePage::findBySlugOrFail('testimonials');
-        } catch (\Exception $e) {
-            $this->page = new WebsitePage([
-                'title' => 'Customer Testimonials',
-                'slug' => 'testimonials',
-                'content' => '<p>Read what our satisfied customers have to say about our products and services.</p>',
-            ]);
-        }
-
-        // Load all approved and published testimonials
-        $this->testimonials = Testimonial::approved()
-            ->published()
-            ->orderBy('is_featured', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Load website settings for hero background
-        $backgroundImage = WebsiteSetting::get('testimonials_background_image');
-        $this->heroBackgroundUrl = $backgroundImage
-            ? 'url(' . asset('storage/' . $backgroundImage) . ')'
-            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-    }
-
     public function render()
     {
-        return view('livewire.website.testimonials');
+        $page = WebsitePage::where('slug', 'testimonials')->where('is_active', true)->first();
+
+        return view('livewire.website.testimonials', [
+            'page' => $page,
+            'testimonials' => Testimonial::approved()->published()
+                ->orderByDesc('is_featured')->orderByDesc('created_at')->get(),
+            'heroBackgroundUrl' => WebsiteSetting::backgroundCss('testimonials_background_image'),
+        ])->layoutData([
+            'title' => $page?->meta_title ?: 'Customer Reviews',
+            'description' => $page?->meta_description ?: 'Read what our customers say about us.',
+        ]);
     }
 }

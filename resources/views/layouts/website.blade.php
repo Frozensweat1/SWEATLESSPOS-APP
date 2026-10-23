@@ -1,267 +1,154 @@
 @php
-    $siteName = \App\Models\WebsiteSetting::get('site_name', 'SweatlessPOS');
-    $siteLogo = \App\Models\WebsiteSetting::get('logo_image');
-    $faviconUrl = $siteLogo ? asset('storage/' . $siteLogo) : asset('assets/img/logo.png');
-    $siteDescription = \App\Models\WebsiteSetting::get('site_description', 'Your trusted point of sale solution');
-@endphp
+    use App\Models\WebsiteSetting as S;
 
+    $siteName = S::get('site_name', config('app.name', 'Sweatless POS'));
+    $siteTagline = S::get('site_tagline', '');
+    $siteDesc = S::get('site_description', $siteTagline);
+    $logo = S::get('logo_image');
+    $logoUrl = $logo ? asset('storage/' . $logo) : asset('assets/img/icon-192.png');
+    $phone = S::get('phone');
+    $email = S::get('email');
+    $address = S::get('address');
+    $whatsapp = preg_replace('/\D+/', '', (string) S::get('whatsapp_number', ''));
+    $pageTitle = isset($title) && $title ? $title . ' | ' . $siteName : $siteName . ($siteTagline ? ' — ' . $siteTagline : '');
+    $pageDesc = \Illuminate\Support\Str::limit(strip_tags((string) ($description ?? $siteDesc)), 160);
+    $pageImage = $image ?? $logoUrl;
+    $links = [
+        ['/', 'Home', request()->is('/')],
+        ['about', 'About', request()->is('about')],
+        ['products', 'Products', request()->is('products*', 'product/*')],
+        ['gallery', 'Gallery', request()->is('gallery*')],
+        ['testimonials', 'Reviews', request()->is('testimonials')],
+        ['contact', 'Contact', request()->is('contact')],
+    ];
+    $social = [
+        'facebook' => S::get('facebook_url'),
+        'instagram' => S::get('instagram_url'),
+        'twitter' => S::get('twitter_url'),
+        'linkedin' => S::get('linkedin_url'),
+        'music' => S::get('tiktok_url'),
+    ];
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <meta name="description" content="{{ $page->meta_description ?? $siteDescription }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ $pageTitle }}</title>
+    <meta name="description" content="{{ $pageDesc }}">
+    <link rel="canonical" href="{{ url()->current() }}">
 
-    <!-- SEO Meta Tags -->
-    <meta name="keywords"
-        content="{{ $page->meta_keywords ?? 'POS, Point of Sale, Retail, Business Management, ' . $siteName }}">
-    <meta name="author" content="{{ $siteName }}">
-    <meta name="robots" content="index, follow">
-
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="{{ $siteName }}">
-    <meta property="og:title" content="{{ $page->meta_title ?? ($page->title ?? $siteName) }}">
-    <meta property="og:description" content="{{ $page->meta_description ?? $siteDescription }}">
-    <meta property="og:image" content="{{ $faviconUrl }}">
+    <meta property="og:title" content="{{ $pageTitle }}">
+    <meta property="og:description" content="{{ $pageDesc }}">
     <meta property="og:url" content="{{ url()->current() }}">
-
-    <!-- Twitter -->
+    <meta property="og:image" content="{{ $pageImage }}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ $page->meta_title ?? ($page->title ?? $siteName) }}">
-    <meta name="twitter:description" content="{{ $page->meta_description ?? $siteDescription }}">
-    <meta name="twitter:image" content="{{ $faviconUrl }}">
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
-    <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="{{ $siteName }}">
+    <link rel="manifest" href="{{ url('/manifest.webmanifest') }}">
+    <link rel="icon" href="{{ asset('assets/img/icon-192.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ asset('assets/img/icon-192.png') }}">
 
-    <title>{{ $page->meta_title ?? ($page->title ?? $siteName) }}</title>
+    <link rel="stylesheet" href="{{ asset('assets/css/site.css') }}?v={{ @filemtime(public_path('assets/css/site.css')) }}">
+    <script data-navigate-once>window.SITE_PWA = {!! json_encode(['sw' => asset('sw.js'), 'scope' => rtrim(url('/'), '/') . '/'], JSON_UNESCAPED_SLASHES) !!};</script>
+    <script src="{{ asset('assets/js/site.js') }}?v={{ @filemtime(public_path('assets/js/site.js')) }}" defer data-navigate-once></script>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
-        body {
-            font-family: 'Figtree', sans-serif;
-            background-color: #f8f9fa;
-            padding-top: 70px;
-        }
-
-        .navbar {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
-            z-index: 1000;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .navbar-logo {
-            height: 40px;
-            width: auto;
-            object-fit: contain;
-        }
-
-        .nav-link {
-            color: #555 !important;
-            font-weight: 500;
-            margin-left: 1rem;
-        }
-
-        .nav-link:hover {
-            color: #007bff !important;
-        }
-
-        footer {
-            background-color: #2d3436;
-            color: white;
-            margin-top: 4rem;
-            padding: 2rem 0;
-        }
-
-        .hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 4rem 0;
-            margin-bottom: 2rem;
-        }
-
-        .card {
-            border: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .1);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .hero-section,
-        .about-section,
-        .products-section,
-        .gallery-section {
-            background-size: cover !important;
-            background-position: center !important;
-            background-attachment: fixed !important;
-        }
-
-        .gallery-album:hover {
-            transform: scale(1.05);
-        }
-
-        .gallery-album:hover>.position-absolute {
-            opacity: 1 !important;
-        }
-
-        .hover-lift:hover {
-            transform: translateY(-10px);
-        }
-
-        @media (max-width: 768px) {
-            .display-3 {
-                font-size: 2rem !important;
-            }
-
-            .display-5 {
-                font-size: 1.5rem !important;
-            }
-        }
-    </style>
-
+    @isset($jsonLd)
+        <script type="application/ld+json">{!! json_encode($jsonLd, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+    @endisset
     @livewireStyles
 </head>
+<body>
+    <a href="#main" class="sr-only">Skip to content</a>
 
-<body class="antialiased">
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light">
+    <header class="site-header" x-data="{ open: false }" @keydown.escape.window="open = false">
         <div class="container">
-            <a class="navbar-brand" href="/">
-                @if ($siteLogo)
-                    <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ $siteName }}" class="navbar-logo">
-                @else
-                    <i class="fas fa-store"></i>
-                @endif
+            <a href="{{ url('/') }}" class="brand" wire:navigate>
+                <img src="{{ $logoUrl }}" alt="" width="36" height="36">
                 <span>{{ $siteName }}</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/about">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/products">Products</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/testimonials">Testimonials</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/gallery">Gallery</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/contact">Contact</a>
-                    </li>
-                    @auth
-                        <li class="nav-item">
-                            <a class="nav-link" href="/dashboard">Dashboard</a>
-                        </li>
-                    @endauth
-                </ul>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Main Content -->
-    <main>
+            <nav class="nav" aria-label="Main">
+                @foreach ($links as [$path, $label, $active])
+                    <a href="{{ url($path) }}" wire:navigate @if ($active) aria-current="page" @endif>{{ $label }}</a>
+                @endforeach
+                <a href="{{ url('/dashboard') }}">Staff Portal</a>
+            </nav>
+
+            <button type="button" class="menu-btn" @click="open = true" aria-label="Open menu" :aria-expanded="open">
+                <x-site.icon name="menu" :size="26" />
+            </button>
+        </div>
+
+        <div x-show="open" x-cloak class="drawer-backdrop" @click="open = false" x-transition.opacity></div>
+        <aside x-show="open" x-cloak class="drawer" aria-label="Mobile menu" x-transition>
+            <div class="drawer-top">
+                <strong>{{ $siteName }}</strong>
+                <button type="button" class="menu-btn" @click="open = false" aria-label="Close menu"><x-site.icon name="x" :size="24" /></button>
+            </div>
+            @foreach ($links as [$path, $label, $active])
+                <a href="{{ url($path) }}" wire:navigate @click="open = false" @if ($active) aria-current="page" @endif>{{ $label }}</a>
+            @endforeach
+            <a href="{{ url('/dashboard') }}">Staff Portal</a>
+            <button type="button" class="btn btn--ghost install-btn" hidden style="margin-top:auto"><x-site.icon name="download" :size="18" /> Install app</button>
+        </aside>
+    </header>
+
+    <main id="main">
         {{ $slot }}
     </main>
 
-    <!-- Footer -->
-    <footer>
+    <footer class="site-footer">
         <div class="container">
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <h6>About Us</h6>
-                    <p>{{ \App\Models\WebsiteSetting::get('site_tagline', 'Your trusted POS solution') }}</p>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <h6>Contact</h6>
-                    <p>
-                        📧 {{ \App\Models\WebsiteSetting::get('email', 'info@example.com') }}<br>
-                        📱 {{ \App\Models\WebsiteSetting::get('phone', '+1 (555) 000-0000') }}<br>
-                        📍 {{ \App\Models\WebsiteSetting::get('address', 'Your Address') }}
-                    </p>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <h6>Follow Us</h6>
-                    <div style="font-size: 1.5rem;">
-                        @if (\App\Models\WebsiteSetting::get('facebook_url'))
-                            <a href="{{ \App\Models\WebsiteSetting::get('facebook_url') }}" target="_blank"
-                                class="text-white me-3" title="Facebook"><i class="fab fa-facebook"></i></a>
-                        @endif
-                        @if (\App\Models\WebsiteSetting::get('instagram_url'))
-                            <a href="{{ \App\Models\WebsiteSetting::get('instagram_url') }}" target="_blank"
-                                class="text-white me-3" title="Instagram"><i class="fab fa-instagram"></i></a>
-                        @endif
-                        @if (\App\Models\WebsiteSetting::get('twitter_url'))
-                            <a href="{{ \App\Models\WebsiteSetting::get('twitter_url') }}" target="_blank"
-                                class="text-white me-3" title="Twitter"><i class="fab fa-twitter"></i></a>
-                        @endif
-                        @if (\App\Models\WebsiteSetting::get('linkedin_url'))
-                            <a href="{{ \App\Models\WebsiteSetting::get('linkedin_url') }}" target="_blank"
-                                class="text-white me-3" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                        @endif
-                        @if (\App\Models\WebsiteSetting::get('tiktok_url'))
-                            <a href="{{ \App\Models\WebsiteSetting::get('tiktok_url') }}" target="_blank"
-                                class="text-white me-3" title="TikTok"><i class="fab fa-tiktok"></i></a>
-                        @endif
-                        @if (\App\Models\WebsiteSetting::get('whatsapp_number'))
-                            <a href="https://wa.me/{{ \App\Models\WebsiteSetting::get('whatsapp_number') }}"
-                                target="_blank" class="text-white me-3" title="WhatsApp"><i
-                                    class="fab fa-whatsapp"></i></a>
+            <div class="footer-grid">
+                <div>
+                    <h4>{{ $siteName }}</h4>
+                    @if ($siteDesc)<p>{{ \Illuminate\Support\Str::limit($siteDesc, 160) }}</p>@endif
+                    <div class="social">
+                        @foreach ($social as $icon => $href)
+                            @if ($href)
+                                <a href="{{ $href }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $icon === 'music' ? 'TikTok' : ucfirst($icon) }}"><x-site.icon :name="$icon" :size="18" /></a>
+                            @endif
+                        @endforeach
+                        @if ($whatsapp)
+                            <a href="https://wa.me/{{ $whatsapp }}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><x-site.icon name="message-circle" :size="18" /></a>
                         @endif
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <h6>Newsletter</h6>
+                <div>
+                    <h4>Explore</h4>
+                    <ul>
+                        @foreach ($links as [$path, $label])
+                            <li><a href="{{ url($path) }}" wire:navigate>{{ $label }}</a></li>
+                        @endforeach
+                    </ul>
+                </div>
+                <div>
+                    <h4>Contact</h4>
+                    <ul>
+                        @if ($address)<li><x-site.icon name="map-pin" :size="16" /> {{ $address }}</li>@endif
+                        @if ($phone)<li><x-site.icon name="phone" :size="16" /> <a href="tel:{{ preg_replace('/[^\d+]/', '', $phone) }}">{{ $phone }}</a></li>@endif
+                        @if ($email)<li><x-site.icon name="mail" :size="16" /> <a href="mailto:{{ $email }}">{{ $email }}</a></li>@endif
+                    </ul>
+                </div>
+                <div>
+                    <h4>Stay updated</h4>
                     @livewire('website.newsletter-form')
+                    <button type="button" class="btn btn--outline-light install-btn" hidden style="margin-top:.75rem"><x-site.icon name="download" :size="18" /> Install app</button>
                 </div>
             </div>
-            <hr class="bg-white">
-            <div class="text-center">
-                <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+            <div class="copyright">
+                <span>&copy; {{ date('Y') }} {{ $siteName }}. All rights reserved.</span>
             </div>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     @livewireScripts
 </body>
-
 </html>
